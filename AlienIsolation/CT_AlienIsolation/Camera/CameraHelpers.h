@@ -7,14 +7,14 @@ struct GamepadState
   DirectX::XMFLOAT2 leftStick;
   DirectX::XMFLOAT2 rightStick;
   double trigger;
-  BYTE LeftShoulder;
-  BYTE RightShoulder;
-  BYTE LeftThumbButton;
-  BYTE RightThumbButton;
-  BYTE DPad_Left;
-  BYTE DPad_Right;
-  BYTE DPad_Up;
-  BYTE DPad_Down;
+  BYTE leftShoulder;
+  BYTE rightShoulder;
+  BYTE leftThumbButton;
+  BYTE rightThumbButton;
+  BYTE dpad_Left;
+  BYTE dpad_Right;
+  BYTE dpad_Up;
+  BYTE dpad_Down;
   BYTE Buttons[4];
 };
 
@@ -28,10 +28,18 @@ struct Camera
 {
   float x, y, z;
   float pitch, yaw, roll;
+  float fov;
 
   float movementSpeed{ 1.0f };
-  float rotationSpeed{ 1.0f };
-  float rollSpeed{ 0.2f };
+  float rotationSpeed{ DirectX::XM_PI/4 };
+  float rollSpeed{ DirectX::XM_PI / 8 };
 
   DirectX::XMFLOAT4 qRotation;
+};
+
+struct RotationBuffer
+{
+  double pitch[100];
+  double yaw[100];
+  double roll[100];
 };

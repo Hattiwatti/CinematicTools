@@ -7,12 +7,10 @@
 #pragma comment(lib, "libMinHook.x86.lib")
 
 typedef HRESULT(WINAPI * tD3D11Present)(IDXGISwapChain*, UINT, UINT);
-typedef int(__thiscall* tCameraUpdate)(int, int, int);
-typedef int(__fastcall* tCameraUpdate2)(int, int, int);
+typedef int(__fastcall* tCameraUpdate)(int, int, int);
 
 tD3D11Present oD3D11Present = nullptr;
 tCameraUpdate oCameraUpdate = nullptr;
-tCameraUpdate2 oCameraUpdate2 = nullptr;
 
 HRESULT WINAPI hD3D11Present(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 {
@@ -20,14 +18,9 @@ HRESULT WINAPI hD3D11Present(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT
   return oD3D11Present(pSwapChain, SyncInterval, Flags);
 }
 
-int __fastcall hCameraUpdate(int This, int _EDX, int a1, int a2)
+int __fastcall hCameraUpdate(int a1, int a2, int a3)
 {
-  return oCameraUpdate(This, a1, a2);
-}
-
-int __fastcall hCameraUpdate2(int a1, int a2, int a3)
-{
-  int result = oCameraUpdate2(a1, a2, a3);
+  int result = oCameraUpdate(a1, a2, a3);
   g_mainHandle->GetCameraManager()->CameraHook(a3);
   return result;
 }
@@ -78,8 +71,7 @@ void Hooks::Init()
     return;
   }
 
-  CreateHook("Camera Update", ((int)GetModuleHandleA("AI.exe") + 0x2CCF0), hCameraUpdate, (LPVOID*)&oCameraUpdate);
-  CreateHook("Camera Update #2", ((int)GetModuleHandleA("AI.exe") + 0x2ADA0), hCameraUpdate2, (LPVOID*)&oCameraUpdate2);
+  CreateHook("Camera Update", ((int)GetModuleHandleA("AI.exe") + 0x2ADA0), hCameraUpdate, (LPVOID*)&oCameraUpdate);
   oD3D11Present = (tD3D11Present)HookVTableFunction((PDWORD*)AI::Rendering::GetSwapChain(), (PBYTE)hD3D11Present, 8);
 }
 
