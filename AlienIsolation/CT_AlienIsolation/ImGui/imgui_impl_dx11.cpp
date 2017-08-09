@@ -6,7 +6,6 @@
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#include "imgui.h"
 #include "imgui_impl_dx11.h"
 
 // DirectX
@@ -15,7 +14,8 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
 
-#pragma comment(lib, "d3dcompiler.lib")
+#include "../Main.h"
+#include "../resource.h"
 
 // Data
 static INT64                    g_Time = 0;
@@ -355,38 +355,14 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
   // Create the vertex shader
   {
-    static const char* vertexShader =
-      "cbuffer vertexBuffer : register(b0) \
-            {\
-            float4x4 ProjectionMatrix; \
-            };\
-            struct VS_INPUT\
-            {\
-            float2 pos : POSITION;\
-            float4 col : COLOR0;\
-            float2 uv  : TEXCOORD0;\
-            };\
-            \
-            struct PS_INPUT\
-            {\
-            float4 pos : SV_POSITION;\
-            float4 col : COLOR0;\
-            float2 uv  : TEXCOORD0;\
-            };\
-            \
-            PS_INPUT main(VS_INPUT input)\
-            {\
-            PS_INPUT output;\
-            output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
-            output.col = input.col;\
-            output.uv  = input.uv;\
-            return output;\
-            }";
+    HRSRC rc = FindResource(Main::hInstance, MAKEINTRESOURCE(IDR_RCDATA4), RT_RCDATA);
+    if (!rc) return false;
+    HGLOBAL hglobal = LoadResource(Main::hInstance, rc);
+    if (!hglobal) return false;
+    void* pCompiledShader = LockResource(hglobal);
+    DWORD shaderSize = SizeofResource(Main::hInstance, rc);
 
-    D3DCompile(vertexShader, strlen(vertexShader), NULL, NULL, NULL, "main", "vs_4_0", 0, 0, &g_pVertexShaderBlob, NULL);
-    if (g_pVertexShaderBlob == NULL) // NB: Pass ID3D10Blob* pErrorBlob to D3DCompile() to get error showing in (const char*)pErrorBlob->GetBufferPointer(). Make sure to Release() the blob!
-      return false;
-    if (g_pd3dDevice->CreateVertexShader((DWORD*)g_pVertexShaderBlob->GetBufferPointer(), g_pVertexShaderBlob->GetBufferSize(), NULL, &g_pVertexShader) != S_OK)
+    if (g_pd3dDevice->CreateVertexShader(pCompiledShader, shaderSize, nullptr, &g_pVertexShader) != S_OK)
       return false;
 
     // Create the input layout
@@ -395,7 +371,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
       { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (size_t)(&((ImDrawVert*)0)->uv),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
       { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (size_t)(&((ImDrawVert*)0)->col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
-    if (g_pd3dDevice->CreateInputLayout(local_layout, 3, g_pVertexShaderBlob->GetBufferPointer(), g_pVertexShaderBlob->GetBufferSize(), &g_pInputLayout) != S_OK)
+    if (g_pd3dDevice->CreateInputLayout(local_layout, 3, pCompiledShader, shaderSize, &g_pInputLayout) != S_OK)
       return false;
 
     // Create the constant buffer
@@ -412,26 +388,14 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
   // Create the pixel shader
   {
-    static const char* pixelShader =
-      "struct PS_INPUT\
-            {\
-            float4 pos : SV_POSITION;\
-            float4 col : COLOR0;\
-            float2 uv  : TEXCOORD0;\
-            };\
-            sampler sampler0;\
-            Texture2D texture0;\
-            \
-            float4 main(PS_INPUT input) : SV_Target\
-            {\
-            float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
-            return out_col; \
-            }";
+    HRSRC rc = FindResource(Main::hInstance, MAKEINTRESOURCE(IDR_RCDATA3), RT_RCDATA);
+    if (!rc) return false;
+    HGLOBAL hglobal = LoadResource(Main::hInstance, rc);
+    if (!hglobal) return false;
+    void* pCompiledShader = LockResource(hglobal);
+    DWORD shaderSize = SizeofResource(Main::hInstance, rc);
 
-    D3DCompile(pixelShader, strlen(pixelShader), NULL, NULL, NULL, "main", "ps_4_0", 0, 0, &g_pPixelShaderBlob, NULL);
-    if (g_pPixelShaderBlob == NULL)  // NB: Pass ID3D10Blob* pErrorBlob to D3DCompile() to get error showing in (const char*)pErrorBlob->GetBufferPointer(). Make sure to Release() the blob!
-      return false;
-    if (g_pd3dDevice->CreatePixelShader((DWORD*)g_pPixelShaderBlob->GetBufferPointer(), g_pPixelShaderBlob->GetBufferSize(), NULL, &g_pPixelShader) != S_OK)
+    if (g_pd3dDevice->CreatePixelShader(pCompiledShader, shaderSize, nullptr, &g_pPixelShader) != S_OK)
       return false;
   }
 
@@ -584,7 +548,6 @@ void ImGui_ImplDX11_NewFrame()
   // Start the frame
   ImGui::NewFrame();
 }
-
 
 ID3D11Device* ImGui_ImplDX11_GetDevice()
 {
