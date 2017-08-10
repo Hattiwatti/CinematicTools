@@ -26,7 +26,7 @@ struct ControlState
 
 struct Camera
 {
-  float x, y, z;
+  DirectX::XMFLOAT3 position;
   float pitch, yaw, roll;
   float fov;
 
@@ -35,6 +35,13 @@ struct Camera
   float rollSpeed{ DirectX::XM_PI / 8 };
 
   DirectX::XMFLOAT4 qRotation;
+};
+
+struct GameCamera
+{
+  DirectX::XMFLOAT4 rotation;
+  DirectX::XMFLOAT3 position;
+  float fov;
 };
 
 struct RotationBuffer

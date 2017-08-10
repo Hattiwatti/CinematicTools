@@ -1,6 +1,7 @@
 #include "CameraManager.h"
 #include "../AlienIsolation.h"
 #include "../Main.h"
+#include "../ImGui/imgui.h"
 #include "../Util/Log.h"
 
 using namespace DirectX;
@@ -10,15 +11,17 @@ CameraManager::CameraManager()
   m_camera.pitch = m_camera.yaw = m_camera.roll = 0;
   XMVECTOR rotation = DirectX::XMQuaternionRotationRollPitchYaw(0, 0, 0);
   XMStoreFloat4(&m_camera.qRotation, rotation);
-  m_camera.x = 2.06f;
-  m_camera.y = 14.85f;
-  m_camera.z = 37.f;
+
+  //Testing
+  m_camera.position.x = 2.06f;
+  m_camera.position.y = 14.85f;
+  m_camera.position.z = 37.f;
   m_camera.fov = 45.f;
 
   ZeroMemory(&m_controlState, sizeof(ControlState));
   ZeroMemory(&m_rotationHistory, sizeof(RotationBuffer));
 
-  m_cameraEnabled = true;
+  m_cameraEnabled = false;
   Log::Ok("Camera Manager initialized");
 }
 
@@ -48,7 +51,7 @@ void CameraManager::Update(double dt)
 void CameraManager::UpdateCamera(double dt)
 {
   XMVECTOR rotation = XMQuaternionRotationRollPitchYaw(m_camera.pitch, m_camera.yaw, m_camera.roll);
-  XMVECTOR transform = XMVectorSet(m_camera.x, m_camera.y, m_camera.z, 0);
+  XMVECTOR transform = XMLoadFloat3(&m_camera.position);
 
   XMVECTOR left = XMVectorSet(1, 0, 0, 0);
   XMVECTOR up = XMVectorSet(0, 1, 0, 0);
@@ -59,9 +62,7 @@ void CameraManager::UpdateCamera(double dt)
   transform += XMVector3Rotate(forward, rotation) * m_controlState.dZ * m_camera.movementSpeed * dt;
 
   XMStoreFloat4(&m_camera.qRotation, rotation);
-  m_camera.x = transform.m128_f32[0];
-  m_camera.y = transform.m128_f32[1];
-  m_camera.z = transform.m128_f32[2];
+  XMStoreFloat3(&m_camera.position, transform);
 
   m_controlState.dX = 0;
   m_controlState.dY = 0;
@@ -79,8 +80,6 @@ void CameraManager::UpdateControls(double dt)
     m_rotationHistory.yaw[i] = m_rotationHistory.yaw[i - 1];
     m_rotationHistory.roll[i] = m_rotationHistory.roll[i - 1];
   }
-
-
   if (!AI::Rendering::HasFocus())
     return;
   
@@ -111,24 +110,30 @@ void CameraManager::UpdateControls(double dt)
     m_controlState.dZ += 1;
   if (GetAsyncKeyState('S') & 0x8000)
     m_controlState.dZ -= 1;
-  if (GetAsyncKeyState('A') & 0x8000)
-    m_controlState.dX += 1;
   if (GetAsyncKeyState('D') & 0x8000)
+    m_controlState.dX += 1;
+  if (GetAsyncKeyState('A') & 0x8000)
     m_controlState.dX -= 1;
   if (GetAsyncKeyState(VK_SPACE) & 0x8000)
     m_controlState.dY += 1;
   if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
     m_controlState.dY -= 1;
 
+  AI::Input::Mouse* pMouse = AI::Input::GetMouse();
+  if(pMouse)
+  {
+    m_controlState.dYaw += pMouse->m_dAxis[0] * 10;
+    m_controlState.dPitch += pMouse->m_dAxis[1] * 10;
+  }
+
   m_rotationHistory.pitch[0] = m_controlState.dPitch * dt * m_camera.rotationSpeed;
   m_rotationHistory.yaw[0] = m_controlState.dYaw * dt * m_camera.rotationSpeed;
   m_rotationHistory.roll[0] = m_controlState.dRoll * dt * m_camera.rollSpeed;
 }
 
-
-
 bool CameraManager::CameraHook(int pCamera)
 {
+  m_pGameCamera = (GameCamera*)pCamera;
   if (!m_cameraEnabled) return false;
 
   XMFLOAT4* pRotation = (XMFLOAT4*)(pCamera);
@@ -136,15 +141,35 @@ bool CameraManager::CameraHook(int pCamera)
   float* pFov = (float*)pCamera + 0x1C;
 
   *pRotation = m_camera.qRotation;
-  pTransform->x = m_camera.x;
-  pTransform->y = m_camera.y;
-  pTransform->z = m_camera.z;
+  *pTransform = m_camera.position;
   *pFov = m_camera.fov;
 
   return true;
 }
 
+void CameraManager::ToggleCamera()
+{
+  m_cameraEnabled = !m_cameraEnabled;
+  if (m_cameraEnabled)
+  {
+    m_camera.position = m_pGameCamera->position;
+  }
+}
+
+void CameraManager::DrawUI()
+{
+  if(ImGui::Button(m_cameraEnabled ? "Disable Camera" : "Enable Camera", ImVec2(110, 33)))
+  {
+    ToggleCamera();
+  }
+
+  ImGui::InputFloat("Movement speed", &m_camera.movementSpeed, 0, 0, 2);
+  ImGui::InputFloat("Rotation speed", &m_camera.rotationSpeed, 0, 0, 2);
+  ImGui::InputFloat("Roll speed", &m_camera.rollSpeed, 0, 0, 2);
+}
+
+
 CameraManager::~CameraManager()
 {
-  
+  m_cameraEnabled = false;
 }

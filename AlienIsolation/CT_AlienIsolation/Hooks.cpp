@@ -8,9 +8,11 @@
 
 typedef HRESULT(WINAPI * tD3D11Present)(IDXGISwapChain*, UINT, UINT);
 typedef int(__fastcall* tCameraUpdate)(int, int, int);
+typedef char(__thiscall* tKeyboardUpdate)(int);
 
 tD3D11Present oD3D11Present = nullptr;
 tCameraUpdate oCameraUpdate = nullptr;
+tKeyboardUpdate oKeyboardUpdate = nullptr;
 
 HRESULT WINAPI hD3D11Present(IDXGISwapChain* pSwapChain, UINT SyncInterval, UINT Flags)
 {
@@ -22,6 +24,15 @@ int __fastcall hCameraUpdate(int a1, int a2, int a3)
 {
   int result = oCameraUpdate(a1, a2, a3);
   g_mainHandle->GetCameraManager()->CameraHook(a3);
+  return result;
+}
+
+char __fastcall hKeyboardUpdate(int This)
+{
+  char result = oKeyboardUpdate(This);
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
+    memset((void*)(This + 0x20), 0, 0xF4); // Still allows esc for main menu
+
   return result;
 }
 
@@ -72,6 +83,7 @@ void Hooks::Init()
   }
 
   CreateHook("Camera Update", ((int)GetModuleHandleA("AI.exe") + 0x2ADA0), hCameraUpdate, (LPVOID*)&oCameraUpdate);
+  CreateHook("Keyboard Update", ((int)GetModuleHandleA("AI.exe") + 0x60EA80), hKeyboardUpdate, (LPVOID*)&oKeyboardUpdate);
   oD3D11Present = (tD3D11Present)HookVTableFunction((PDWORD*)AI::Rendering::GetSwapChain(), (PBYTE)hD3D11Present, 8);
 }
 

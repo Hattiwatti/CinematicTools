@@ -94,56 +94,33 @@ UIManager::UIManager()
   m_initialized = true;
 }
 
-bool checked = false;
-const float color[4] = { 0.f, 0.f, 0.f, 1.f };
-float test = 1.0f;
-
+void UIManager::Toggle()
+{
+  m_enabled = !m_enabled;
+  AI::Input::Mouse* pMouse = AI::Input::GetMouse();
+  if (pMouse)
+  {
+    pMouse->m_showCursor = m_enabled;
+    pMouse->m_enableGameInput = !m_enabled;
+  }
+}
 
 void UIManager::Draw()
 {
   if (!m_enabled || !m_initialized) return;
 
-  /*
-  ID3D11RenderTargetView* pRtv = nullptr;
-  ImGui_ImplDX11_GetContext()->OMGetRenderTargets(1, &pRtv, nullptr);
-
-  ImGui_ImplDX11_GetContext()->ClearRenderTargetView(pRtv, color);
-
-  ImGui_ImplDX11_GetContext()->OMSetBlendState(m_States->AlphaBlend(), nullptr, 0xFFFFFFFF);
-  ImGui_ImplDX11_GetContext()->OMSetDepthStencilState(m_States->DepthNone(), 0);
-  ImGui_ImplDX11_GetContext()->RSSetState(m_States->CullNone());
-
-  m_Effect->Apply(ImGui_ImplDX11_GetContext());
-  ImGui_ImplDX11_GetContext()->IASetInputLayout(m_pInputLayout);
-
-  m_PrimitiveBatch->Begin();
-
-  XMFLOAT3 topLeft(10, 10, 0);
-  XMFLOAT3 bottomRight(800,800,0);
-  XMFLOAT3 topRight(800, 10, 0.f);
-  XMFLOAT3 bottomLeft(10, 800, 0.f);
-
-  VertexPositionColor v1, v2, v3, v4;
-
-  v1.position = topLeft;
-  v2.position = bottomLeft;
-  v3.position = topRight;
-  v4.position = bottomRight;
-
-  v1.color = v2.color = v3.color = v4.color = XMFLOAT4(1, 1, 1, 0.5f);
-
-  m_PrimitiveBatch->DrawQuad(v1, v3, v4, v2);
-
-  m_PrimitiveBatch->End();*/
+  AI::Input::Mouse* pMouse = AI::Input::GetMouse();
+  if (pMouse)
+    pMouse->m_showCursor = m_enabled;
 
   ImGui_ImplDX11_NewFrame();
   {
     ImGui::ShowTestWindow();
 
     ImGui::SetNextWindowSize(ImVec2(300, 500));
-    ImGui::Begin("Minimap Generator", nullptr);
+    ImGui::Begin("Cinematic Tools for Alien: Isolation", nullptr);
     {
-      ImGui::InputFloat("Camera Speed", &test, 1, 0, 2);
+      g_mainHandle->GetCameraManager()->DrawUI();
 
     } ImGui::End();
   }

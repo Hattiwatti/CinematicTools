@@ -355,12 +355,12 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
   // Create the vertex shader
   {
-    HRSRC rc = FindResource(Main::hInstance, MAKEINTRESOURCE(IDR_RCDATA4), RT_RCDATA);
+    HRSRC rc = FindResource(g_mainHandle->GetDllHandle(), MAKEINTRESOURCE(IDR_VERTEXSHADER), RT_RCDATA);
     if (!rc) return false;
-    HGLOBAL hglobal = LoadResource(Main::hInstance, rc);
+    HGLOBAL hglobal = LoadResource(g_mainHandle->GetDllHandle(), rc);
     if (!hglobal) return false;
     void* pCompiledShader = LockResource(hglobal);
-    DWORD shaderSize = SizeofResource(Main::hInstance, rc);
+    DWORD shaderSize = SizeofResource(g_mainHandle->GetDllHandle(), rc);
 
     if (g_pd3dDevice->CreateVertexShader(pCompiledShader, shaderSize, nullptr, &g_pVertexShader) != S_OK)
       return false;
@@ -388,12 +388,12 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
   // Create the pixel shader
   {
-    HRSRC rc = FindResource(Main::hInstance, MAKEINTRESOURCE(IDR_RCDATA3), RT_RCDATA);
+    HRSRC rc = FindResource(g_mainHandle->GetDllHandle(), MAKEINTRESOURCE(IDR_PIXELSHADER), RT_RCDATA);
     if (!rc) return false;
-    HGLOBAL hglobal = LoadResource(Main::hInstance, rc);
+    HGLOBAL hglobal = LoadResource(g_mainHandle->GetDllHandle(), rc);
     if (!hglobal) return false;
     void* pCompiledShader = LockResource(hglobal);
-    DWORD shaderSize = SizeofResource(Main::hInstance, rc);
+    DWORD shaderSize = SizeofResource(g_mainHandle->GetDllHandle(), rc);
 
     if (g_pd3dDevice->CreatePixelShader(pCompiledShader, shaderSize, nullptr, &g_pPixelShader) != S_OK)
       return false;

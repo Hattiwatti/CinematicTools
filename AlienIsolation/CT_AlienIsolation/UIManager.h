@@ -7,7 +7,7 @@ public:
   UIManager();
   ~UIManager();
 
-  void Toggle() { m_enabled = !m_enabled; };
+  void Toggle();
   void Draw();
 
   bool IsEnabled() { return m_enabled; }
