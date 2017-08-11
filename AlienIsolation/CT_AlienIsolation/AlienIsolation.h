@@ -7,6 +7,37 @@ using namespace DirectX;
 
 namespace AI
 {
+  namespace Game
+  {
+    class Character
+    {
+    public:
+      virtual void Func1();
+
+      BYTE Pad004[0xC];
+      char m_name[0x10];
+
+    public:
+      std::string GetName()
+      {
+        return std::string((const char*)&m_name[0]);
+      }
+    };
+
+    class CharacterManager
+    {
+    public:
+      BYTE Pad000[0xD0];
+      Character** m_characterList;
+      int m_characterListSize;
+
+    public:
+      static CharacterManager* Singleton()
+      {
+        return *(CharacterManager**)((int)GetModuleHandleA("AI.exe") + 0x1236198);
+      }
+    };
+  }
 
   namespace Input
   {

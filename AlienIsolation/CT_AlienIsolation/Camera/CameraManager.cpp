@@ -156,16 +156,32 @@ void CameraManager::ToggleCamera()
   }
 }
 
-void CameraManager::DrawUI()
+void CameraManager::ResetCamera()
 {
-  if(ImGui::Button(m_cameraEnabled ? "Disable Camera" : "Enable Camera", ImVec2(110, 33)))
+  bool wasEnabled = m_cameraEnabled;
+  m_cameraEnabled = false;
+  Sleep(100);
+  if(m_pGameCamera)
   {
-    ToggleCamera();
+    m_camera.position = m_pGameCamera->position;
+    m_camera.pitch = m_camera.yaw = m_camera.roll = 0;
   }
 
-  ImGui::InputFloat("Movement speed", &m_camera.movementSpeed, 0, 0, 2);
-  ImGui::InputFloat("Rotation speed", &m_camera.rotationSpeed, 0, 0, 2);
-  ImGui::InputFloat("Roll speed", &m_camera.rollSpeed, 0, 0, 2);
+  m_cameraEnabled = wasEnabled;
+}
+
+void CameraManager::DrawUI()
+{
+  if(ImGui::Button(m_cameraEnabled ? "Disable Camera" : "Enable Camera", ImVec2(110, 25)))
+    ToggleCamera();
+
+  ImGui::SameLine(0,20);
+  if (ImGui::Button("Reset Camera", ImVec2(110, 25)))
+    ResetCamera();
+
+  ImGui::InputFloat("Movement speed", &m_camera.movementSpeed, 1, 0, 2);
+  ImGui::InputFloat("Rotation speed", &m_camera.rotationSpeed, 0.1, 0, 2);
+  ImGui::InputFloat("Roll speed", &m_camera.rollSpeed, 0.1, 0, 2);
 }
 
 

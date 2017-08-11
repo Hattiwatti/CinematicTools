@@ -12,6 +12,7 @@ public:
   void DrawUI();
 
   void ToggleCamera();
+  void ResetCamera();
   bool IsCameraEnabled() { return m_cameraEnabled; }
 
 private:
