@@ -19,5 +19,9 @@ IMGUI_API void        ImGui_ImplDX11_NewFrame();
 IMGUI_API void        ImGui_ImplDX11_InvalidateDeviceObjects();
 IMGUI_API bool        ImGui_ImplDX11_CreateDeviceObjects();
 
-IMGUI_API ID3D11Device* ImGui_ImplDX11_GetDevice();
-IMGUI_API ID3D11DeviceContext* ImGui_ImplDX11_GetContext();
+// Handler for Win32 messages, update mouse/keyboard data.
+// You may or not need this for your implementation, but it can serve as reference for handling inputs.
+// Commented out to avoid dragging dependencies on <windows.h> types. You can copy the extern declaration in your code.
+/*
+IMGUI_API LRESULT   ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+*/

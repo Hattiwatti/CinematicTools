@@ -1,62 +1,44 @@
+#include "AlienIsolation.h"
 #include "Main.h"
-#include "Hooks.h"
-#include "Util/Log.h"
+#include "Util/Util.h"
 
-void Main::Init(HINSTANCE dllHandle)
+#include <boost/filesystem.hpp>
+
+bool Main::Initialize()
 {
-  Log::Init();
-  m_dllHandle = dllHandle;
+  boost::filesystem::path dir("Cinematic Tools");
+  if (!boost::filesystem::exists(dir))
+    boost::filesystem::create_directory(dir);
 
-  m_pCameraManager = std::make_unique<CameraManager>();
-  m_pInputManager = std::make_unique<InputManager>();
-  m_pUIManager = std::make_unique<UIManager>();
+  util::log::Init();
+  util::log::Write("Cinematic Tools for Alien: Isolation");
 
-  Hooks::Init();
-
-  m_dtUpdate = m_Clock.now();
-  m_exit = false;
-  while (!m_exit)
+  g_gameHwnd = FindWindowA("Alien: Isolation", NULL);
+  if (g_gameHwnd == NULL)
   {
-    Update();
-    Sleep(1);
+    util::log::Error("Could not get handle for game window");
+    return false;
+  }
+
+  m_pRenderer = std::make_unique<Dx11Renderer>();
+  if (!m_pRenderer->Initialize(AI::D3D::Singleton()->m_pDevice, g_gameHwnd))
+  {
+    util::log::Error("Failed to initalize Dx11Renderer");
+    return false;
+  }
+
+  return true;
+}
+
+void Main::Run()
+{
+  while (!g_shutdown)
+  {
+    Sleep(1000);
   }
 }
 
-void Main::Update()
+void Main::Release()
 {
-  duration<double> dt = m_Clock.now() - m_dtUpdate;
-  m_dtUpdate = m_Clock.now();
-
-  m_pCameraManager->Update(dt.count());
-
-  // Temporary hotkeys
-  if(GetAsyncKeyState(VK_INSERT) & 0x8000)
-  {
-    m_pCameraManager->ToggleCamera();
-
-    while (GetAsyncKeyState(VK_INSERT) & 0x8000)
-      Sleep(100);
-  }
-
-  if (GetAsyncKeyState(VK_F1) & 0x8000)
-  {
-    m_pUIManager->Toggle();
-
-    while (GetAsyncKeyState(VK_F1) & 0x8000)
-      Sleep(100);
-  }
+  m_pRenderer->Release();
 }
-
-Main::Main()
-{ }
-
-Main::~Main()
-{
-  Hooks::UnInitialize();
-
-  m_pCameraManager.release();
-  m_pInputManager.release();
-  m_pUIManager.release();
-  m_dllHandle = 0;
-}
-

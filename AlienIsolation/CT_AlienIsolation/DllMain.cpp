@@ -1,25 +1,48 @@
+#include <Windows.h>
 #include "Main.h"
 
+bool g_shutdown = false;
 Main* g_mainHandle = nullptr;
+HINSTANCE g_dllHandle = NULL;
+HWND g_gameHwnd = NULL;
 
-DWORD WINAPI Initialize(LPVOID arg)
+DWORD WINAPI ShutdownThread(LPVOID lpArg)
 {
-  HINSTANCE* pDllInstance = static_cast<HINSTANCE*>(arg);
- 
-  g_mainHandle = new Main();
-  g_mainHandle->Init(*pDllInstance);
+  while (!GetAsyncKeyState(VK_F6) & 0x8000)
+    Sleep(100);
 
-  delete pDllInstance;
+  g_shutdown = true;
+  while (g_shutdown)
+    Sleep(1000);
+
+  FreeLibraryAndExitThread(g_dllHandle, 0);
+}
+
+DWORD WINAPI InitializeThread(LPVOID lpArg)
+{
+  HINSTANCE* pInstance = static_cast<HINSTANCE*>(lpArg);
+  g_dllHandle = *pInstance;
+
+  g_mainHandle = new Main();
+  if (g_mainHandle->Initialize())
+    g_mainHandle->Run();
+
+  g_mainHandle->Release();
+
   delete g_mainHandle;
-  g_mainHandle = 0;
+  delete pInstance;
+  g_shutdown = false;
 
   return 0;
 }
 
 DWORD WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-  if (dwReason == DLL_PROCESS_ATTACH)
-    CreateThread(0, 0, &Initialize, new HINSTANCE(hInstance), 0, 0);
+	if (dwReason == DLL_PROCESS_ATTACH)
+	{
+    CreateThread(NULL, NULL, InitializeThread, new HINSTANCE(hInstance), NULL, NULL);
+    CreateThread(NULL, NULL, ShutdownThread, new HINSTANCE(hInstance), NULL, NULL);
+	}
 
-  return 1;
+	return 1;
 }
