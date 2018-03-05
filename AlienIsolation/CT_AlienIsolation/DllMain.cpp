@@ -8,7 +8,7 @@ HWND g_gameHwnd = NULL;
 
 DWORD WINAPI ShutdownThread(LPVOID lpArg)
 {
-  while (!GetAsyncKeyState(VK_F6) & 0x8000)
+  while (!(GetAsyncKeyState(VK_F6) & 0x8000))
     Sleep(100);
 
   g_shutdown = true;

@@ -76,6 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>D:\Programming\DirectXTK\Inc;D:\Programming\minhook-master\include;D:\Programming\boost_1_64_0-bin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>D:\Programming\DirectXTK\Bin\Desktop_2017\Win32\Debug;D:\Programming\minhook-master\build\VC15\lib\Debug;D:\Programming\boost_1_64_0-bin\lib32-msvc-14.1;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -129,6 +130,9 @@
     <ClCompile Include="imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Rendering\Dx11Renderer.cpp" />
+    <ClCompile Include="UI.cpp" />
+    <ClCompile Include="Util\Hooks.cpp" />
+    <ClCompile Include="Util\ImGuiHelpers.cpp" />
     <ClCompile Include="Util\Log.cpp" />
     <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>
@@ -146,6 +150,8 @@
     <ClInclude Include="Rendering\RenderImpl.h" />
     <ClInclude Include="Rendering\Wrappers.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="UI.h" />
+    <ClInclude Include="Util\ImGuiHelpers.h" />
     <ClInclude Include="Util\Util.h" />
   </ItemGroup>
   <ItemGroup>

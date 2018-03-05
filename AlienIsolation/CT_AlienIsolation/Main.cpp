@@ -21,24 +21,41 @@ bool Main::Initialize()
   }
 
   m_pRenderer = std::make_unique<Dx11Renderer>();
+  m_pUI = std::make_unique<UI>();
+
   if (!m_pRenderer->Initialize(AI::D3D::Singleton()->m_pDevice, g_gameHwnd))
   {
-    util::log::Error("Failed to initalize Dx11Renderer");
+    util::log::Error("Failed to initialize Dx11Renderer");
     return false;
   }
+
+  if (!m_pUI->Initialize(m_pRenderer.get(), g_gameHwnd))
+  {
+    util::log::Error("Failed to initialize UI");
+    return false;
+  }
+
+  util::hooks::Init();
 
   return true;
 }
 
 void Main::Run()
 {
+  util::log::Write("Run until shutdown");
+  g_shutdown = false;
+
   while (!g_shutdown)
   {
     Sleep(1000);
   }
+
+  util::log::Write("Shutdown");
 }
 
 void Main::Release()
 {
+  util::log::Write("Release");
+  util::hooks::Release();
   m_pRenderer->Release();
 }

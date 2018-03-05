@@ -3,6 +3,7 @@
 #include <Windows.h>
 
 #include "Rendering/Dx11Renderer.h"
+#include "UI.h"
 
 class Main
 {
@@ -14,8 +15,11 @@ public:
   void Run();
   void Release();
 
+  UI* GetUI() { return m_pUI.get(); }
+
 private:
   std::unique_ptr<Dx11Renderer> m_pRenderer;
+  std::unique_ptr<UI> m_pUI;
 
 public:
   Main(Main const&) = delete;

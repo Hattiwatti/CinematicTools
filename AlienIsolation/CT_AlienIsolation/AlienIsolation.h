@@ -20,4 +20,10 @@ namespace AI
       return *(D3D**)((int)GetModuleHandleA("AI.exe") + 0x17DF5CC); 
     }
 	};
+
+  class Character
+  {
+  public:
+    virtual void Func1();
+  };
 }
