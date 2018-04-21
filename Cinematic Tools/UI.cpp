@@ -1,11 +1,16 @@
 #include "UI.h"
 #include "Main.h"
 #include "Util/Util.h"
-#include "imgui/imgui.h"
+#include "Util/ImGuiEXT.h"
 #include "imgui/imgui_impl_dx11.h"
 
 #include <WICTextureLoader.h>
 #pragma comment(lib, "DirectXTK.lib")
+
+const char* g_creditsText = "The following libraries are used in making the Cinematic Tools:\n"
+"MinHook by Tsuda Kageyu, inih by Ben Hoyt, ImGui by Omar Cornut, C++ libraries by Boost, DirectXTK and DirectXTex by Microsoft.\n\n"
+"Thank you for using the tools and making awesome stuff with it!\n\n"
+"Remember to report bugs at www.cinetools.xyz/bugs";
 
 UI::UI() :
   m_Enabled(false),
@@ -42,6 +47,10 @@ bool UI::Initialize()
   // ImGui Configuration //
   /////////////////////////
 
+  // ImGui is an immensely useful and simple-to-use UI system made by Omar Cornut.
+  // Definitely check it out:
+  // https://github.com/ocornut/imgui
+
   ImGui::CreateContext();
   if (!ImGui_ImplDX11_Init(g_gameHwnd, m_pDevice, m_pContext))
   {
@@ -67,12 +76,47 @@ bool UI::Initialize()
   // Font loading & config //
   ///////////////////////////
 
+  ImGuiIO& io = ImGui::GetIO();
+  io.Fonts->AddFontDefault();
+
+  ImFontConfig fontConfig;
+  fontConfig.OversampleH = 8;
+  fontConfig.OversampleV = 8;
+  fontConfig.FontDataOwnedByAtlas = false;
+
+  ImFontConfig fontOffsetConfig = fontConfig;
+  fontOffsetConfig.GlyphOffset = ImVec2(0, -2);
+
+  void* pData;
+  DWORD szData;
+
+//   if (!util::GetResource(IDR_FONT_PURISTA, pData, szData))
+//   {
+//     util::log::Error("Failed to load IDR_FONT_PURISTASEMI from resources");
+//     return false;
+//   }
+// 
+//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 24, &fontConfig);
+//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 20, &fontOffsetConfig);
+//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 18, &fontOffsetConfig);
+// 
+//   if (!util::GetResource(IDR_FONT_SEGOE, pData, dataSize))
+//   {
+//     util::log::Error("Failed to load IDR_FONT_SEGOEUI from resources");
+//     return false;
+//   }
+// 
+//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 16, &fontConfig);
+//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 20, &fontConfig);
 
 
   //////////////////////////////////////
   // Background & title image loading //
   //////////////////////////////////////
 
+  //m_TitleImage = CreateImageFromResource(IDR_IMG_TITLE);
+  //for (int i = IDR_IMG_BG1; i <= IDR_IMG_BG1; ++i)
+  //  m_BgImages.emplace_back(CreateImageFromResource(i));
 
 
   if (!CreateRenderTarget())
@@ -87,6 +131,9 @@ void UI::Draw()
   if (!m_Enabled) return;
   if (m_IsResizing)
   {
+    // I think it's a good idea to skip some frames after a resize
+    // juuuuust to make sure the game's done with resizing stuff.
+
     m_FramesToSkip -= 1;
     if (m_FramesToSkip == 0)
     {
@@ -98,6 +145,85 @@ void UI::Draw()
 
   m_pContext->OMSetRenderTargets(1, &m_pRTV, nullptr);
 
+  ImGuiIO& io = ImGui::GetIO();
+  ImGui_ImplDX11_NewFrame();
+
+  ImGui::SetNextWindowSize(ImVec2(800, 460));
+  ImGui::Begin("Cinematic Tools", nullptr, ImGuiWindowFlags_NoResize);
+  {
+    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImGui::Dummy(ImVec2(0, 20));
+
+    ImGui::GetWindowDrawList()->AddImage(m_BgImages[0].pSRV.Get(), ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 800, windowPos.y + 460));
+    //if (m_isFading)
+    //  ImGui::GetWindowDrawList()->AddImage(m_bgImages[m_nextIndex].pShaderResourceView.Get(), ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 800, windowPos.y + 460),
+    //    ImVec2(0, 0), ImVec2(1, 1), ImGui::ColorConvertFloat4ToU32(ImVec4(1, 1, 1, m_opacity)));
+
+    ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(windowPos.x, windowPos.y + 19), ImVec2(windowPos.x + 800, windowPos.y + 460), 0x10000000);
+    ImGui::GetWindowDrawList()->AddImage(m_TitleImage.pSRV.Get(), ImVec2(windowPos.x + 210, windowPos.y + 85), ImVec2(windowPos.x + 592, windowPos.y + 131));
+
+    ImGui::PushFont(io.Fonts->Fonts[2]);
+    ImGui::Dummy(ImVec2(143, 33));
+    ImGui::SameLine(0, 0);
+
+    if (ImGui::ToggleButton("CAMERA", ImVec2(158, 33), m_SelectedMenu == UIMenu_Camera, false))
+      m_SelectedMenu = UIMenu_Camera;
+
+    ImGui::SameLine(0, 20);
+    if (ImGui::ToggleButton("ENVIRONMENT", ImVec2(158, 33), m_SelectedMenu == UIMenu_Visuals, false))
+      m_SelectedMenu = UIMenu_Visuals;
+
+    ImGui::SameLine(0, 20);
+    if (ImGui::ToggleButton("MISC", ImVec2(158, 33), m_SelectedMenu == UIMenu_Misc, false))
+      m_SelectedMenu = UIMenu_Misc;
+
+    ImGui::PopFont();
+
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 143, windowPos.y + 76), ImVec2(windowPos.x + 301, windowPos.y + 76), 0xFF1C79E5, 2);
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 321, windowPos.y + 76), ImVec2(windowPos.x + 479, windowPos.y + 76), 0xFF1C79E5, 2);
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 499, windowPos.y + 76), ImVec2(windowPos.x + 657, windowPos.y + 76), 0xFF1C79E5, 2);
+
+    ImGui::Dummy(ImVec2(0, 50));
+    ImGui::Dummy(ImVec2(0, 0));
+    ImGui::SameLine(10);
+
+    {
+      ImGui::BeginChild("contentChild", ImVec2(-10, -10), false);
+
+      if (m_SelectedMenu == UIMenu_Camera)
+        g_mainHandle->GetCameraManager()->DrawUI();
+      else if (m_SelectedMenu == UIMenu_Visuals)
+      {
+      }
+      else if (m_SelectedMenu == UIMenu_Misc)
+      {
+        ImGui::Columns(3, "miscColumns", false);
+        ImGui::NextColumn();
+        ImGui::SetColumnOffset(-1, 5);
+
+        ImGui::PushFont(io.Fonts->Fonts[4]);
+        ImGui::PushItemWidth(130);
+
+        ImGui::NextColumn();
+        ImGui::SetColumnOffset(-1, 388.5f);
+
+        ImGui::PushFont(io.Fonts->Fonts[2]);
+        ImGui::Dummy(ImVec2(0, 5));
+        ImGui::Text("CREDITS"); ImGui::PopFont();
+
+        ImGui::TextWrapped(g_creditsText);
+
+        ImGui::PopFont();
+      }
+      ImGui::EndChild();
+    }
+
+  } ImGui::End();
+
+  ImGui::Render();
+
+  m_HasKeyboardFocus = ImGui::GetIO().WantCaptureKeyboard;
+  m_HasMouseFocus = ImGui::GetIO().WantCaptureMouse;
 }
 
 void UI::OnResize()
@@ -108,14 +234,14 @@ void UI::OnResize()
   // Failing to handle this will usually result in a crash.
 
   m_IsResizing = true;
-  m_FramesToSkip = 1000;
+  m_FramesToSkip = 100;
   if (m_pRTV)
     m_pRTV.Reset();
 }
 
 void UI::Update(double dt)
 {
-
+  // For fancy background fading effects
 }
 
 bool UI::CreateRenderTarget()

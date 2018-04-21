@@ -1,5 +1,6 @@
 #pragma once
 #include <d3d11.h>
+#include <vector>
 #include <wrl.h>
 
 using namespace Microsoft::WRL;
@@ -42,17 +43,21 @@ private:
 
 private:
   bool m_Enabled;
+  SelectedMenu m_SelectedMenu;
 
   ID3D11Device* m_pDevice;
   ID3D11DeviceContext* m_pContext;
   ComPtr<ID3D11RenderTargetView> m_pRTV;
+
+  ImageRsc m_TitleImage;
+  std::vector<ImageRsc> m_BgImages;
+  bool m_IsFadingBg;
 
   bool m_IsResizing;
   int m_FramesToSkip;
 
   bool m_HasMouseFocus;
   bool m_HasKeyboardFocus;
-
   bool m_HasSeenWarning;
   bool m_ShowUpdateNotes;
 

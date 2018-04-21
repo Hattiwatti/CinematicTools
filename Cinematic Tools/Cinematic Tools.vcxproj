@@ -134,9 +134,13 @@
     <ClCompile Include="imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="inih\cpp\INIReader.cpp" />
     <ClCompile Include="inih\ini.c" />
+    <ClCompile Include="Input\InputSystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="UI.cpp" />
     <ClCompile Include="Util\Hooks.cpp" />
+    <ClCompile Include="Util\ImGuiEXT.cpp" />
+    <ClCompile Include="Util\Log.cpp" />
+    <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\CameraManager.h" />
@@ -149,9 +153,16 @@
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="inih\cpp\INIReader.h" />
     <ClInclude Include="inih\ini.h" />
+    <ClInclude Include="Input\ActionDefs.h" />
+    <ClInclude Include="Input\InputSystem.h" />
     <ClInclude Include="Main.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="UI.h" />
+    <ClInclude Include="Util\ImGuiEXT.h" />
     <ClInclude Include="Util\Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Cinematic Tools.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

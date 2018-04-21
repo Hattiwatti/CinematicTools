@@ -2,6 +2,7 @@
 #include "Util/Util.h"
 #include <boost/filesystem.hpp>
 #include <boost/chrono.hpp>
+#include <fstream>
 
 static const char* g_gameName = "theHunter: CoTW";
 static const char* g_moduleName = "theHunterCoTW_F";
@@ -36,14 +37,14 @@ bool Main::Initialize()
   g_gameHwnd = FindWindowA(g_className, NULL);
   if (g_gameHwnd == NULL)
   {
-    //util::log::Error("Failed to retrieve window handle, GetLastError 0x%X", GetLastError());
+    util::log::Error("Failed to retrieve window handle, GetLastError 0x%X", GetLastError());
     return false;
   }
 
   g_gameHandle = GetModuleHandleA(g_moduleName);
   if (g_gameHandle == NULL)
   {
-    //util::log::Error("Failed to retrieve module handle, GetLastError 0x%X", GetLastError());
+    util::log::Error("Failed to retrieve module handle, GetLastError 0x%X", GetLastError());
     return false;
   }
 
@@ -82,15 +83,37 @@ void Main::Run()
 
 void Main::LoadConfig()
 {
+  // Read config.ini using inih by Ben Hoyt
+  // https://github.com/benhoyt/inih
+
   m_pConfig = std::make_unique<INIReader>(g_configFile);
   int parseResult = m_pConfig->ParseError();
 
+  // If there's problems reading the file, notify the user.
+  // Code-wise it should be safe to just continue,
+  // since you can still request variables from INIReader.
+  // They'll just return the specified default value.
+  if (parseResult != 0)
+    util::log::Warning("Config file could not be loaded, using default settings");
+
   m_pCameraManager->ReadConfig(m_pConfig.get());
+  //m_pInputSystem->ReadConfig(m_pConfig.get());
 }
 
 void Main::SaveConfig()
 {
+  std::fstream file;
+  file.open(g_configFile, std::ios_base::out | std::ios_base::trunc);
 
+  if (!file.is_open())
+  {
+    util::log::Error("Could not save config, failed to open file for writing. GetLastError 0x%X", GetLastError());
+    return;
+  }
+
+  file << m_pCameraManager->GetConfig();
+  
+  file.close();
 }
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
