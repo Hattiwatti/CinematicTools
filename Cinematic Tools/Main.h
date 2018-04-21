@@ -37,6 +37,10 @@ public:
 
 extern bool g_shutdown;
 
+extern bool g_hasFocus;
+extern bool g_uiOwnsKeyboard;
+extern bool g_uiOwnsMouse;
+
 extern Main* g_mainHandle;
 extern HINSTANCE g_dllHandle;
 

@@ -6,7 +6,6 @@
 static const char* g_gameName = "theHunter: CoTW";
 static const char* g_moduleName = "theHunterCoTW_F";
 static const char* g_className = "thcotw";
-
 static const char* g_configFile = "./Cinematic Tools/config.ini";
 
 Main* g_mainHandle = nullptr;
@@ -68,6 +67,7 @@ bool Main::Initialize()
 void Main::Run()
 {
   boost::chrono::high_resolution_clock::time_point lastUpdate = boost::chrono::high_resolution_clock::now();
+
   while (!g_shutdown)
   {
     boost::chrono::duration<double> dt = boost::chrono::high_resolution_clock::now() - lastUpdate;
@@ -97,15 +97,16 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam
 LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
-    return true;
+    return TRUE;
 
   switch (uMsg)
   {
-  case WM_MOUSEMOVE:
-    // Send to Input Manager
+  case WM_ACTIVATE:
+    // Focus event
     break;
   case WM_SIZE:
     // Resize event
+    g_mainHandle->m_pUI->OnResize();
     break;
   case WM_DESTROY:
     g_shutdown = true;
@@ -114,3 +115,4 @@ LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
   return CallWindowProc(g_origWndProc, hwnd, uMsg, wParam, lParam);
 }
+

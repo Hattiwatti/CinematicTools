@@ -1,4 +1,5 @@
 #include "Util.h"
+#include "../Main.h"
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <Windows.h>
@@ -18,7 +19,9 @@ typedef __int64(__fastcall* tCameraUpdateExample)(__int64, DirectX::XMFLOAT4X4*)
 tIDXGISwapChain_Present oIDXGISwapChain_Present = nullptr;
 DWORD WINAPI hIDXGISwapChain_Present(IDXGISwapChain* pSwapchain, UINT SyncInterval, UINT Flags)
 {
-  // Draw UI
+  if (!g_shutdown)
+    g_mainHandle->GetUI()->Draw();
+
   return oIDXGISwapChain_Present(pSwapchain, SyncInterval, Flags);
 }
 

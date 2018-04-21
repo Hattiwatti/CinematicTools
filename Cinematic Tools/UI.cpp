@@ -38,6 +38,10 @@ bool UI::Initialize()
     return false;
   }
 
+  /////////////////////////
+  // ImGui Configuration //
+  /////////////////////////
+
   ImGui::CreateContext();
   if (!ImGui_ImplDX11_Init(g_gameHwnd, m_pDevice, m_pContext))
   {
@@ -59,6 +63,18 @@ bool UI::Initialize()
   Style.Colors[ImGuiCol_Border] = ImVec4(0, 0, 0, 0);
   Style.Colors[ImGuiCol_BorderShadow] = ImVec4(0, 0, 0, 0);
 
+  ///////////////////////////
+  // Font loading & config //
+  ///////////////////////////
+
+
+
+  //////////////////////////////////////
+  // Background & title image loading //
+  //////////////////////////////////////
+
+
+
   if (!CreateRenderTarget())
     return false;
 
@@ -68,6 +84,19 @@ bool UI::Initialize()
 
 void UI::Draw()
 {
+  if (!m_Enabled) return;
+  if (m_IsResizing)
+  {
+    m_FramesToSkip -= 1;
+    if (m_FramesToSkip == 0)
+    {
+      m_IsResizing = false;
+      CreateRenderTarget();
+    }
+    return;
+  }
+
+  m_pContext->OMSetRenderTargets(1, &m_pRTV, nullptr);
 
 }
 
@@ -91,6 +120,9 @@ void UI::Update(double dt)
 
 bool UI::CreateRenderTarget()
 {
+  // Creates a render target to backbuffer resource
+  // Should guarantee that stuff actually gets drawn
+
   IDXGISwapChain* pSwapChain = nullptr; // Get Swapchain here
   ComPtr<ID3D11Texture2D> pBackBuffer = nullptr;
 
