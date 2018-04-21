@@ -1,0 +1,1 @@
+This project's purpose is to generalize the Cinematic Tools to a level where it can be easily cloned and be expanded upon when working on a new game. I've tried to add comments here and there to explain what's happening, but it should be pretty straightforward.
