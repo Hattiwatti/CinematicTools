@@ -1,5 +1,8 @@
 #pragma once
+#include <d3d11.h>
 #include <DirectXMath.h>
+#include <vector>
+#include <wrl.h>
 
 struct CatmullRomNode
 {
@@ -32,4 +35,13 @@ struct Camera
                                   0,1,0,0,
                                   0,0,1,0,
                                   0,0,0,1 };
+};
+
+struct CameraTrack
+{
+  std::string Name;
+  std::vector<CatmullRomNode> Nodes;
+  Microsoft::WRL::ComPtr<ID3D11Buffer> VertexBuffer;
+  Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
+  int IndexCount;
 };

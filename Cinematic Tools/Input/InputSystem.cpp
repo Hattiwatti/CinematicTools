@@ -1,6 +1,7 @@
 #include "InputSystem.h"
 #include "../Main.h"
 #include "../Util/Util.h"
+#include "../Util/ImGuiEXT.h"
 #include <boost/chrono.hpp>
 #include <thread>
 
@@ -13,7 +14,8 @@ InputSystem::InputSystem() :
   m_WantedActionStates(),
   m_SmoothActionStates(),
   m_GamepadKeyStates(),
-  m_MouseState()
+  m_MouseState(),
+  m_KeyboardKeyNames()
 {
 
 }
@@ -53,7 +55,115 @@ void InputSystem::HandleMouseMsg(LPARAM lParam)
   int deltaX = xPosRelative - (windowRect.right - windowRect.left) / 2;
   int deltaY = yPosRelative - (windowRect.bottom - windowRect.top) / 2;
 
-  m_MouseState = std::pair<float, float>(deltaX * g_mouseSensitivity, deltaY * g_mouseSensitivity);
+  m_MouseState = DirectX::XMFLOAT2(deltaX * g_mouseSensitivity, deltaY * g_mouseSensitivity);
+}
+
+bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
+{
+  if (wParam == VK_ESCAPE)
+  {
+    m_CaptureState.CaptureKb = false;
+    m_CaptureState.CaptureGamepad = false;
+    return false;
+  }
+
+  if (!m_CaptureState.CaptureKb) return false;
+
+  if (wParam == VK_LCONTROL || wParam == VK_RCONTROL || wParam == VK_CONTROL ||
+    wParam == VK_LSHIFT || wParam == VK_RSHIFT || wParam == VK_SHIFT ||
+    wParam == VK_MENU)
+  {
+    // If the key is a modifier, save it, but don't stop capture
+    m_CaptureState.CapturedKbKey = wParam << 8;
+    m_CaptureState.CapturedKbName = util::KeyLparamToString(lParam) + " + ";
+    //m_KeyboardKeyNames[m_CaptureState.CaptureActionIndex] = m_CaptureState.CapturedKbName;
+  }
+  else
+  {
+    m_CaptureState.CapturedKbKey |= wParam;
+    m_CaptureState.CapturedKbName += util::KeyLparamToString(lParam);
+
+    m_KeyboardBindings[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbKey;
+    m_CaptureState.CaptureKb = false;
+  }
+
+  return true;
+}
+
+void InputSystem::ShowUI()
+{
+
+}
+
+void InputSystem::DrawUI()
+{
+  if (!m_ShowUI)
+  {
+    // If the config window is closed while capturing a hotkey,
+    // stop capturing the hotkey!
+    m_CaptureState.CaptureKb = false;
+    m_CaptureState.CaptureGamepad = false;
+  }
+
+  ImGuiIO& io = ImGui::GetIO();
+  ImGui::SetNextWindowSize(ImVec2(492, 520));
+  ImGui::Begin("Config", &m_ShowUI, ImGuiWindowFlags_NoResize);
+  {
+    if (!ImGui::IsWindowFocused())
+    {
+      // Stop capture also when focus is lost
+      m_CaptureState.CaptureKb = false;
+      m_CaptureState.CaptureGamepad = false;
+    }
+
+    ImGui::Columns(2, "configColumns", false);
+    ImGui::NextColumn();
+    ImGui::SetColumnOffset(-1, 10);
+
+    ImGui::Dummy(ImVec2(0, 2));
+
+    ImGui::PushFont(io.Fonts->Fonts[4]);
+    ImGui::PushItemWidth(150);
+
+    ImGui::Text("Hotkeys"); ImGui::SameLine(140.f, -1.f);
+    ImGui::Text("Keyboard"); ImGui::SameLine(298.f, -1.f);
+    ImGui::Text("Gamepad");
+    int i = 0;
+
+    // Iterate through actions and draw UI to configure them
+    for (int i = 0; i < Action::ActionCount; ++i)
+    {
+      Action action = static_cast<Action>(i);
+      std::string name = ActionUIStringMap.at(action);
+      GamepadKey padKey = m_GamepadBindings[i];
+
+      std::string kbString = m_KeyboardKeyNames[i];
+      if (m_CaptureState.CaptureKb)
+      {
+        kbString = m_CaptureState.CapturedKbName;
+        if (kbString.empty())
+          kbString = "Press a key";
+      }
+
+      std::string padString = (m_CaptureState.CaptureGamepad && m_CaptureState.ActionIndex == i) ? "Press a key" : GamepadKeyStrings.at(padKey);
+
+      ImGui::Text("%s", name.c_str()); ImGui::SameLine(140.f, -1.f);
+      name = "##Input" + name;
+      ImGui::InputText(name.c_str(), (char*)kbString.c_str(), kbString.size(), ImGuiInputTextFlags_ReadOnly); ImGui::SameLine();
+      if (ImGui::IsItemClicked())
+        StartKeyboardCapture(i);
+
+      name += "Gamepad";
+      ImGui::InputText(name.c_str(), (char*)padString.c_str(), padString.size(), ImGuiInputTextFlags_ReadOnly);
+      if (ImGui::IsItemClicked())
+        StartGamepadCapture(i);
+    }
+
+    ImGui::Dummy(ImVec2(0, 10));
+    ImGui::PopFont();
+
+  } ImGui::End();
+
 }
 
 bool InputSystem::IsActionDown(Action action)
@@ -79,6 +189,37 @@ void InputSystem::ReadConfig(INIReader* pReader)
     m_KeyboardBindings[action] = vkey;
     m_GamepadBindings[action] = padKey;
   }
+
+  for (int i = 0; i < Action::ActionCount; ++i)
+  {
+    std::string sHotkey = "";
+    int hotkey = m_KeyboardBindings[static_cast<Action>(i)];
+    int modifier = hotkey >> 8;
+    hotkey &= 0xFF;
+
+    if (modifier)
+      sHotkey += util::VkToString(modifier) + " + ";
+    sHotkey += util::VkToString(hotkey);
+
+    m_KeyboardKeyNames[i] = sHotkey;
+  }
+}
+
+const std::string InputSystem::GetConfig()
+{
+  std::string kbConfig = "[KeyboardMap]\n";
+  std::string padConfig = "[GamepadMap]\n";
+
+  for (auto& actionInfo : ActionStringMap)
+  {
+    Action action = actionInfo.first;
+    std::string name = actionInfo.second;
+
+    kbConfig += name + " = " + std::to_string(m_KeyboardBindings[action]) + "\n";
+    padConfig += name + " = " + std::to_string(m_GamepadBindings[action]) + "\n";
+  }
+
+  return kbConfig + "\n" + padConfig;
 }
 
 void InputSystem::ActionUpdate()
@@ -105,6 +246,19 @@ void InputSystem::ActionUpdate()
           UpdateXInput();
         else
           UpdateDInput();
+
+        if (m_CaptureState.CaptureGamepad)
+        {
+          for (int i = 0; i < GamepadKey::GamepadKey_Count; ++i)
+          {
+            float keyState = m_GamepadKeyStates[i];
+            if (keyState != 0)
+            {
+              m_CaptureState.CaptureGamepad = false;
+              m_GamepadBindings[m_CaptureState.ActionIndex] = static_cast<GamepadKey>(i);
+            }
+          }
+        }
 
         if (g_mainHandle->GetCameraManager()->IsGamepadDisabled())
         {
@@ -197,7 +351,7 @@ void InputSystem::ControllerUpdate()
 
       // And then lets search for DInput controllers
       if (m_DInputInterface == NULL) continue;
-      HRESULT hr = m_DInputInterface->EnumDevices(DI8DEVCLASS_GAMECTRL, DIEnumDevicesCallback, this, DIEDFL_ATTACHEDONLY);
+      HRESULT hr = m_DInputInterface->EnumDevices(DI8DEVCLASS_GAMECTRL, (LPDIENUMDEVICESCALLBACKA)DIEnumDevicesCallback, this, DIEDFL_ATTACHEDONLY);
       if (FAILED(hr)) continue;
 
       if (m_Gamepad.DInputGamepad == NULL) continue;
@@ -504,6 +658,24 @@ void InputSystem::UpdateDInput()
   m_GamepadKeyStates[GamepadKey::Button4] = (diState.rgbButtons[3] == 128) ? 1.0f : 0.f;
   m_GamepadKeyStates[GamepadKey::Button5] = (diState.rgbButtons[8] == 128) ? 1.0f : 0.f;
   m_GamepadKeyStates[GamepadKey::Button6] = (diState.rgbButtons[9] == 128) ? 1.0f : 0.f;
+}
+
+void InputSystem::StartGamepadCapture(int index)
+{
+  m_CaptureState.CaptureKb = false;
+  m_CaptureState.CaptureGamepad = true;
+  m_CaptureState.ActionIndex = index;
+  m_CaptureState.CapturedKbName = "";
+  m_CaptureState.CapturedKbKey = 0;
+}
+
+void InputSystem::StartKeyboardCapture(int index)
+{
+  m_CaptureState.CaptureGamepad = false;
+  m_CaptureState.CaptureKb = true;
+  m_CaptureState.ActionIndex = index;
+  m_CaptureState.CapturedKbName = "";
+  m_CaptureState.CapturedKbKey = 0;
 }
 
 BOOL InputSystem::DIEnumDevicesCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)

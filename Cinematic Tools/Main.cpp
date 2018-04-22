@@ -15,6 +15,9 @@ HINSTANCE g_gameHandle = NULL;
 WNDPROC g_origWndProc = 0;
 bool g_shutdown = false;
 
+ID3D11DeviceContext* g_d3d11Context = nullptr;
+ID3D11Device* g_d3d11Device = nullptr;
+
 Main::Main()
 {
 
@@ -117,6 +120,7 @@ void Main::SaveConfig()
   }
 
   file << m_pCameraManager->GetConfig();
+  file << m_pInputSystem->GetConfig();
   
   file.close();
 }
@@ -131,6 +135,14 @@ LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
   {
   case WM_ACTIVATE:
     // Focus event
+    g_hasFocus = (wParam != WA_INACTIVE);
+    break;
+  case WM_KEYDOWN:
+    if (g_mainHandle->m_pInputSystem->HandleKeyMsg(wParam, lParam))
+      return TRUE;
+    break;
+  case WM_MOUSEMOVE:
+    g_mainHandle->m_pInputSystem->HandleMouseMsg(lParam);
     break;
   case WM_SIZE:
     // Resize event

@@ -204,6 +204,12 @@ void UI::Draw()
         ImGui::PushFont(io.Fonts->Fonts[4]);
         ImGui::PushItemWidth(130);
 
+        ImGui::DrawWithBorders([=]
+        {
+          if (ImGui::Button("Config", ImVec2(158, 33)))
+            g_mainHandle->GetInputSystem()->ShowUI();
+        });
+
         ImGui::NextColumn();
         ImGui::SetColumnOffset(-1, 388.5f);
 

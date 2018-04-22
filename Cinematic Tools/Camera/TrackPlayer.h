@@ -8,14 +8,14 @@ public:
   TrackPlayer();
   ~TrackPlayer();
 
-  void DrawUI();
-  void DrawNodes();
-
   void CreateNode(Camera const& camera);
   void DeleteNode();
 
   void Toggle();
   CatmullRomNode PlayForward(double dt, bool ignoreManual = false);
+
+  void DrawUI();
+  void DrawNodes();
 
   bool IsPlaying() { return m_IsPlaying; }
   bool IsRotationLocked() { return m_LockRotation; }
@@ -25,18 +25,20 @@ private:
   void CreateTrack();
   void DeleteTrack();
 
+  void UpdateNodeBuffers();
+
 private:
   bool m_IsPlaying;
 
   bool m_LockRotation;
   bool m_LockFieldOfView;
   bool m_ManualPlay;
-  float m_SpeedMultiplier;
+  float m_NodeTimeSpan;
 
   unsigned int m_CurrentNode;
   float m_CurrentTime;
 
-  std::vector<int> m_Tracks;
+  std::vector<CameraTrack> m_Tracks;
   unsigned int m_SelectedTrack;
 
   std::vector<const char*> m_TrackNames;

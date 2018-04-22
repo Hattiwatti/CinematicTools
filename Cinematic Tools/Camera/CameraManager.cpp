@@ -150,7 +150,12 @@ void CameraManager::UpdateInput(double dt)
   m_Camera.dRoll  *= dt * m_Camera.RotationSpeed;
   m_Camera.dFov   *= dt * m_Camera.FovSpeed;
 
-  // TODO: Handle mouse input
+  if (m_KbmDisabled)
+  {
+    XMFLOAT2 mouseState = pInput->GetMouseState();
+    m_Camera.dPitch += mouseState.y;
+    m_Camera.dYaw += mouseState.x;
+  }
 }
 
 void CameraManager::ToggleCamera()

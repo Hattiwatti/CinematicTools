@@ -45,7 +45,7 @@ void log::Init()
   freopen_s(&pfstdin, "CONIN$", "r", stdin);
   hstdin = GetStdHandle(STD_INPUT_HANDLE);
   hstdout = GetStdHandle(STD_OUTPUT_HANDLE);
-  pfileout = fopen(".\\Cinematic Tools\\CT.log", "w");
+  fopen_s(&pfileout, ".\\Cinematic Tools\\CT.log", "w");
 }
 
 void log::Write(const char* format, ...)

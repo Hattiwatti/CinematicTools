@@ -127,6 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera\CameraManager.cpp" />
+    <ClCompile Include="Camera\TrackPlayer.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="imgui\imgui.cpp" />
     <ClCompile Include="imgui\imgui_demo.cpp" />
@@ -144,6 +146,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera\CameraManager.h" />
+    <ClInclude Include="Camera\CameraStructs.h" />
+    <ClInclude Include="Camera\TrackPlayer.h" />
     <ClInclude Include="imgui\imconfig.h" />
     <ClInclude Include="imgui\imgui.h" />
     <ClInclude Include="imgui\imgui_impl_dx11.h" />

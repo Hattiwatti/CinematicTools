@@ -20,7 +20,7 @@ public:
   const std::string GetConfig();
 
 private:
-  void UpdateCamera();
+  void UpdateCamera(double dt);
   void UpdateInput(double dt);
 
   void ToggleCamera();

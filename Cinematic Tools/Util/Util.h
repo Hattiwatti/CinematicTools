@@ -28,4 +28,11 @@ namespace util
   };
 
   bool GetResource(int, void*&, DWORD&);
+  std::string VkToString(DWORD vk);
+  std::string KeyLparamToString(LPARAM lparam);
+
+  namespace math
+  {
+    double CatmullRomInterpolate(double y0, double y1, double y2, double y3, double mu);
+  }
 }

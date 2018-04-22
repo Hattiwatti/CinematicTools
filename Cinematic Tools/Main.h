@@ -50,3 +50,6 @@ extern HINSTANCE g_dllHandle;
 extern HINSTANCE g_gameHandle;
 extern HWND g_gameHwnd;
 extern WNDPROC g_origWndProc;
+
+extern ID3D11Device* g_d3d11Device;
+extern ID3D11DeviceContext* g_d3d11Context;
