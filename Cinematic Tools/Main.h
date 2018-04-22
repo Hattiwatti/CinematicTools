@@ -1,5 +1,6 @@
 #pragma once
 #include "Camera/CameraManager.h"
+#include "Input/InputSystem.h"
 #include "UI.h"
 
 #include "inih/cpp/INIReader.h"
@@ -16,6 +17,7 @@ public:
   void Run();
 
   CameraManager* GetCameraManager() { return m_pCameraManager.get(); }
+  InputSystem* GetInputSystem() { return m_pInputSystem.get(); }
   UI* GetUI() { return m_pUI.get(); }
 
 private:
@@ -28,6 +30,7 @@ private:
   std::unique_ptr<INIReader> m_pConfig;
 
   std::unique_ptr<CameraManager> m_pCameraManager;
+  std::unique_ptr<InputSystem> m_pInputSystem;
   std::unique_ptr<UI> m_pUI;
 
 public:

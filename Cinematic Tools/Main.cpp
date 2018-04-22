@@ -34,6 +34,7 @@ bool Main::Initialize()
   util::log::Init();
   util::log::Write("Cinematic Tools for %s", g_gameName);
 
+  // Needed for ImGui + other functionality
   g_gameHwnd = FindWindowA(g_className, NULL);
   if (g_gameHwnd == NULL)
   {
@@ -41,6 +42,7 @@ bool Main::Initialize()
     return false;
   }
 
+  // Used for relative offsets
   g_gameHandle = GetModuleHandleA(g_moduleName);
   if (g_gameHandle == NULL)
   {
@@ -48,6 +50,7 @@ bool Main::Initialize()
     return false;
   }
 
+  // Subclass the window with a new WndProc to catch messages
   g_origWndProc = (WNDPROC)SetWindowLongPtr(g_gameHwnd, -4, (LONG_PTR)&WndProc);
   if (g_origWndProc == 0)
   {
@@ -56,8 +59,10 @@ bool Main::Initialize()
   }
 
   m_pCameraManager = std::make_unique<CameraManager>();
+  m_pInputSystem = std::make_unique<InputSystem>();
   m_pUI = std::make_unique<UI>();
 
+  m_pInputSystem->Initialize();
   if (!m_pUI->Initialize())
     return false;
 
@@ -67,8 +72,8 @@ bool Main::Initialize()
 
 void Main::Run()
 {
+  // Main update loop
   boost::chrono::high_resolution_clock::time_point lastUpdate = boost::chrono::high_resolution_clock::now();
-
   while (!g_shutdown)
   {
     boost::chrono::duration<double> dt = boost::chrono::high_resolution_clock::now() - lastUpdate;
@@ -97,7 +102,7 @@ void Main::LoadConfig()
     util::log::Warning("Config file could not be loaded, using default settings");
 
   m_pCameraManager->ReadConfig(m_pConfig.get());
-  //m_pInputSystem->ReadConfig(m_pConfig.get());
+  m_pInputSystem->ReadConfig(m_pConfig.get());
 }
 
 void Main::SaveConfig()

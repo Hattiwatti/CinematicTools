@@ -1,4 +1,5 @@
 #pragma once
+#include "TrackPlayer.h"
 #include "../inih/cpp/INIReader.h"
 
 class CameraManager
@@ -20,7 +21,7 @@ public:
 
 private:
   void UpdateCamera();
-  void UpdateInput();
+  void UpdateInput(double dt);
 
   void ToggleCamera();
   void ResetCamera();
@@ -31,6 +32,9 @@ private:
 
   bool m_GamepadDisabled;
   bool m_KbmDisabled;
+
+  Camera m_Camera;
+  TrackPlayer m_TrackPlayer;
 
 public:
   CameraManager(CameraManager const&) = delete;
