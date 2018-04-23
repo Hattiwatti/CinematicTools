@@ -154,7 +154,6 @@ void util::hooks::Init()
 }
 
 // In some cases it's useful or even required to disable all hooks or just certain ones
-// 
 void util::hooks::SetHookState(bool enable, std::string const& name)
 {
   if (name.empty())
@@ -203,9 +202,4 @@ void util::hooks::SetHookState(bool enable, std::string const& name)
         util::log::Warning("VTable hook %s is already %s", name.c_str(), enable ? "enabled" : "disabled");
     }
   }
-}
-
-void util::hooks::RemoveHooks()
-{
-  MH_STATUS status = MH_DisableHook(MH_ALL_HOOKS);
 }
