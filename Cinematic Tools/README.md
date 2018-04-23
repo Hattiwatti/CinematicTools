@@ -1,1 +1,11 @@
-This project's purpose is to generalize the Cinematic Tools to a level where it can be easily cloned and be expanded upon when working on a new game. I've tried to add comments here and there to explain what's happening, but it should be pretty straightforward.
+### This project is powered by
+[ImGui](https://github.com/ocornut/imgui) by Omar Cornut
+
+[MinHook](https://github.com/TsudaKageyu/minhook) by Tsuda Kageyu
+
+[inih](https://github.com/benhoyt/inih) by Ben Hoyt
+
+[DirectXTK](https://github.com/Microsoft/DirectXTK) by Microsoft
+
+### Cinematic Tools...
+... is a hack to allow free camera movemenet in different games. This allows you to create pretty screenshots and videos. Depending on the game it also includes engine post-processing effects like Depth of field, LOD fixes, time freeze and some other useful features.
