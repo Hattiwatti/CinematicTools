@@ -26,7 +26,6 @@ Main::Main()
 
 Main::~Main()
 {
-  util::log::Write("Main destructor called");
 }
 
 bool Main::Initialize()
@@ -85,6 +84,8 @@ bool Main::Initialize()
   if (!m_pUI->Initialize())
     return false;
 
+  util::hooks::Init();
+
   LoadConfig();
   return true;
 }
@@ -102,8 +103,9 @@ void Main::Run()
     m_pUI->Update(dt.count());
   }
 
-  // Save config before exit
+  // Save config and disable hooks before exit
   SaveConfig();
+  util::hooks::SetHookState(false);
 }
 
 void Main::LoadConfig()

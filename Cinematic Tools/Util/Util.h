@@ -9,13 +9,25 @@ namespace util
 {
   namespace hooks
   {
+    enum HookType
+    {
+      MinHook,
+      VTable
+    };
+
+    struct Hook
+    {
+      __int64 Address;
+      unsigned int Index;
+      LPVOID* Original;
+      HookType Type;
+      bool Enabled;
+    };
+
     void Init();
 
-    void DisableHooks();
-    void EnableHooks();
-
-    void RemoveHooks();
-    void Uninitialize();
+    // if name is empty, then perform on all hooks
+    void SetHookState(bool enabled, std::string const& name = "");
   };
 
   namespace log
