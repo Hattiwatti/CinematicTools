@@ -53,3 +53,4 @@ extern WNDPROC g_origWndProc;
 
 extern ID3D11Device* g_d3d11Device;
 extern ID3D11DeviceContext* g_d3d11Context;
+extern IDXGISwapChain* g_dxgiSwapChain;

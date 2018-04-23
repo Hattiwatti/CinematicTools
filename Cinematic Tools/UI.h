@@ -45,8 +45,6 @@ private:
   bool m_Enabled;
   SelectedMenu m_SelectedMenu;
 
-  ID3D11Device* m_pDevice;
-  ID3D11DeviceContext* m_pContext;
   ComPtr<ID3D11RenderTargetView> m_pRTV;
 
   ImageRsc m_TitleImage;

@@ -17,6 +17,7 @@ bool g_shutdown = false;
 
 ID3D11DeviceContext* g_d3d11Context = nullptr;
 ID3D11Device* g_d3d11Device = nullptr;
+IDXGISwapChain* g_dxgiSwapChain = nullptr;
 
 Main::Main()
 {
@@ -61,6 +62,21 @@ bool Main::Initialize()
     return false;
   }
 
+  g_d3d11Device = nullptr; // Fetch ID3D11Device
+  g_d3d11Context = nullptr; // Fetch context
+  g_dxgiSwapChain = nullptr; // Fetch SwapChain
+
+  if (!g_d3d11Context || !g_d3d11Device || !g_dxgiSwapChain)
+  {
+    util::log::Error("Failed to retrieve Dx11 interfaces");
+    util::log::Error("Device 0x%I64X DeviceContext 0x%I64X SwapChain 0x%I64X", g_d3d11Device, g_d3d11Context, g_dxgiSwapChain);
+    return false;
+  }
+
+  // Retrieve game version and make a const variable for whatever version
+  // the tools support. If versions mismatch, scan for offsets.
+  // util::offsets::Scan();
+
   m_pCameraManager = std::make_unique<CameraManager>();
   m_pInputSystem = std::make_unique<InputSystem>();
   m_pUI = std::make_unique<UI>();
@@ -86,6 +102,7 @@ void Main::Run()
     m_pUI->Update(dt.count());
   }
 
+  // Save config before exit
   SaveConfig();
 }
 

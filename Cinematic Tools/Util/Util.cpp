@@ -44,23 +44,22 @@ double util::math::CatmullRomInterpolate(double y0, double y1, double y2, double
   return a0 * mu * mu2 + a1 * mu2 + a2 * mu + a3;
 }
 
-
 std::string util::VkToString(DWORD vk)
 {
   unsigned int scanCode = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
 
   switch (vk)
   {
-  case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
-  case VK_PRIOR: case VK_NEXT: // page up and page down
-  case VK_END: case VK_HOME:
-  case VK_INSERT: case VK_DELETE:
-  case VK_DIVIDE: // numpad slash
-  case VK_NUMLOCK:
-  {
-    scanCode |= 0x100; // set extended bit
-    break;
-  }
+    case VK_LEFT: case VK_UP: case VK_RIGHT: case VK_DOWN: // arrow keys
+    case VK_PRIOR: case VK_NEXT: // page up and page down
+    case VK_END: case VK_HOME:
+    case VK_INSERT: case VK_DELETE:
+    case VK_DIVIDE: // numpad slash
+    case VK_NUMLOCK:
+    {
+      scanCode |= 0x100; // set extended bit
+      break;
+    }
   }
 
   wchar_t wKeyName[50];
@@ -87,4 +86,11 @@ std::string util::KeyLparamToString(LPARAM lparam)
 
   std::wstring_convert<std::codecvt_utf8<wchar_t>> utf8_conv;
   return utf8_conv.to_bytes(wKeyName);
+}
+
+BYTE util::CharToByte(char c)
+{
+  BYTE b;
+  sscanf_s(&c, "%hhx", &b);
+  return b;
 }

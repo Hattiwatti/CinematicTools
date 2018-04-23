@@ -81,7 +81,7 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
 
   CatmullRomNode resultNode;
   // If manual play is enabled, time is multiplied
-  // by input. IgnoreManual is for generating display nodes.
+  // by input. IgnoreManual is for generating display buffers.
   if (!m_ManualPlay || ignoreManual)
     m_CurrentTime += dt * timeMultiplier;
   else
@@ -148,6 +148,7 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
   XMVECTOR vPos1 = XMLoadFloat3(&n1->Position);
   XMVECTOR vPos2 = XMLoadFloat3(&n2->Position);
   XMVECTOR vPos3 = XMLoadFloat3(&n3->Position);
+
   resultNode.FieldOfView = util::math::CatmullRomInterpolate(n0->FieldOfView, 
                                                             n1->FieldOfView, 
                                                             n2->FieldOfView, 

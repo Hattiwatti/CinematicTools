@@ -18,8 +18,6 @@ UI::UI() :
   m_HasKeyboardFocus(false),
   m_HasMouseFocus(false),
   m_IsResizing(false),
-  m_pContext(nullptr),
-  m_pDevice(nullptr),
   m_pRTV(nullptr)
 {
 
@@ -33,16 +31,6 @@ UI::~UI()
 
 bool UI::Initialize()
 {
-  m_pDevice = nullptr; // Get ID3D11Device
-  m_pContext = nullptr; // Get ID3D11DeviceContext, or use m_pDevice->GetImmediateContext(&m_pDevice);
-
-  if (!m_pDevice || !m_pContext)
-  {
-    util::log::Error("Failed to retrieve D3D11 interfaces");
-    util::log::Error("m_pDevice 0x%I64X, m_pContext 0x%I64X", m_pDevice, m_pContext);
-    return false;
-  }
-
   /////////////////////////
   // ImGui Configuration //
   /////////////////////////
@@ -52,7 +40,7 @@ bool UI::Initialize()
   // https://github.com/ocornut/imgui
 
   ImGui::CreateContext();
-  if (!ImGui_ImplDX11_Init(g_gameHwnd, m_pDevice, m_pContext))
+  if (!ImGui_ImplDX11_Init(g_gameHwnd, g_d3d11Device, g_d3d11Context))
   {
     util::log::Error("ImGui Dx11 implementation failed to initialize");
     return false;
@@ -143,7 +131,7 @@ void UI::Draw()
     return;
   }
 
-  m_pContext->OMSetRenderTargets(1, &m_pRTV, nullptr);
+  g_d3d11Context->OMSetRenderTargets(1, &m_pRTV, nullptr);
 
   ImGuiIO& io = ImGui::GetIO();
   ImGui_ImplDX11_NewFrame();
@@ -265,7 +253,7 @@ bool UI::CreateRenderTarget()
     return false;
   }
 
-  hr = m_pDevice->CreateRenderTargetView(pBackBuffer.Get(), NULL, &m_pRTV);
+  hr = g_d3d11Device->CreateRenderTargetView(pBackBuffer.Get(), NULL, &m_pRTV);
   if (FAILED(hr))
   {
     util::log::Error("CreateRenderTargetView failed, HRESULT 0x%X", hr);
@@ -287,7 +275,7 @@ ImageRsc UI::CreateImageFromResource(int resourceID)
     return newImg;
   }
 
-  HRESULT hr = DirectX::CreateWICTextureFromMemory(m_pDevice, (const uint8_t*)pData, szData, 
+  HRESULT hr = DirectX::CreateWICTextureFromMemory(g_d3d11Device, (const uint8_t*)pData, szData, 
                 (ID3D11Resource**)newImg.pTexture.ReleaseAndGetAddressOf(), newImg.pSRV.ReleaseAndGetAddressOf());
   if (FAILED(hr))
     util::log::Error("CreateWICTextureFromMemory failed");
