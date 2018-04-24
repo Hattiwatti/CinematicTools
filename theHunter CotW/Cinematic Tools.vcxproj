@@ -23,6 +23,7 @@
     <ProjectGuid>{577ADDCD-AB30-4D0F-97FB-63C96FB1E33C}</ProjectGuid>
     <RootNamespace>CinematicTools</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <ProjectName>CT_theHunterCoTW</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -89,9 +90,10 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\Programming\minhook-master\include;D:\Programming\DirectXTK\Inc;D:\Programming\boost_1_64_0-bin;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>D:\Programming\boost_1_64_0-bin\lib64-msvc-14.1;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Programming\minhook-master\build\VC15\lib\Debug;D:\Programming\DirectXTK\Bin\Desktop_2017\x64\Debug;D:\Programming\boost_1_64_0-bin\lib64-msvc-14.1;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -146,6 +148,7 @@
     <ClCompile Include="Util\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Apex.h" />
     <ClInclude Include="Camera\CameraManager.h" />
     <ClInclude Include="Camera\CameraStructs.h" />
     <ClInclude Include="Camera\TrackPlayer.h" />
@@ -168,6 +171,18 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Cinematic Tools.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\bg1.jpg" />
+    <Image Include="Resources\CT_Title.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\imgui_PixelShader.cso" />
+    <None Include="Resources\imgui_VertexShader.cso" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\Purista Semibold.ttf" />
+    <Font Include="Resources\segoeui.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

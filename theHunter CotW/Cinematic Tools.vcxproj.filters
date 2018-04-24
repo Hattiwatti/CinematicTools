@@ -140,10 +140,29 @@
     <ClInclude Include="Camera\TrackPlayer.h">
       <Filter>Source Files\Camera</Filter>
     </ClInclude>
+    <ClInclude Include="Apex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Cinematic Tools.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\bg1.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\CT_Title.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\imgui_PixelShader.cso" />
+    <None Include="Resources\imgui_VertexShader.cso" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\Purista Semibold.ttf" />
+    <Font Include="Resources\segoeui.ttf" />
   </ItemGroup>
 </Project>
