@@ -169,6 +169,10 @@
   <ItemGroup>
     <ResourceCompile Include="Cinematic Tools.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\imgui_PixelShader.cso" />
+    <None Include="Resources\imgui_VertexShader.cso" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

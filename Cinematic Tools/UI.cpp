@@ -131,7 +131,7 @@ void UI::Draw()
     return;
   }
 
-  g_d3d11Context->OMSetRenderTargets(1, &m_pRTV, nullptr);
+  g_d3d11Context->OMSetRenderTargets(1, m_pRTV.GetAddressOf(), nullptr);
 
   ImGuiIO& io = ImGui::GetIO();
   ImGui_ImplDX11_NewFrame();
@@ -215,6 +215,7 @@ void UI::Draw()
   } ImGui::End();
 
   ImGui::Render();
+  ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
   m_HasKeyboardFocus = ImGui::GetIO().WantCaptureKeyboard;
   m_HasMouseFocus = ImGui::GetIO().WantCaptureMouse;
@@ -243,17 +244,15 @@ bool UI::CreateRenderTarget()
   // Creates a render target to backbuffer resource
   // Should guarantee that stuff actually gets drawn
 
-  IDXGISwapChain* pSwapChain = nullptr; // Get Swapchain here
   ComPtr<ID3D11Texture2D> pBackBuffer = nullptr;
-
-  HRESULT hr = pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)pBackBuffer.ReleaseAndGetAddressOf());
+  HRESULT hr = g_dxgiSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)pBackBuffer.ReleaseAndGetAddressOf());
   if (FAILED(hr) || !pBackBuffer)
   {
     util::log::Error("Failed to retrieve backbuffer from SwapChain, HRESULT 0x%X", hr);
     return false;
   }
 
-  hr = g_d3d11Device->CreateRenderTargetView(pBackBuffer.Get(), NULL, &m_pRTV);
+  hr = g_d3d11Device->CreateRenderTargetView(pBackBuffer.Get(), NULL, m_pRTV.ReleaseAndGetAddressOf());
   if (FAILED(hr))
   {
     util::log::Error("CreateRenderTargetView failed, HRESULT 0x%X", hr);

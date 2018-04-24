@@ -120,9 +120,6 @@ bool UI::Initialize()
   return true;
 }
 
-FLOAT clearColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-using namespace DirectX;
-
 void UI::Draw()
 {
   if (!m_Enabled) return;

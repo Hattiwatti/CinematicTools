@@ -35,7 +35,7 @@ bool Main::Initialize()
     boost::filesystem::create_directory(dir);
 
   util::log::Init();
-  util::log::Write("Cinematic Tools for %s", g_gameName);
+  util::log::Write("Cinematic Tools for %s\n", g_gameName);
 
   // Needed for ImGui + other functionality
   g_gameHwnd = FindWindowA(g_className, NULL);

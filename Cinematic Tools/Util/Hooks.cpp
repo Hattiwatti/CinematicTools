@@ -106,9 +106,9 @@ static void CreateHook(std::string const& name, __int64 target, PVOID hook, T or
     return;
   }
 
-  Hook hookInfo{ 0 };
+  util::hooks::Hook hookInfo{ 0 };
   hookInfo.Address = target;
-  hookInfo.Type = HookType::MinHook;
+  hookInfo.Type = util::hooks::HookType::MinHook;
 
   m_CreatedHooks.emplace(name, hookInfo);
 }
@@ -132,12 +132,12 @@ template <typename T>
 static void CreateVTableHook(std::string const& name, PDWORD64* ppVTable, PVOID hook, SIZE_T iIndex, T original)
 {
   LPVOID* pOriginal = reinterpret_cast<LPVOID*>(original);
-  *original = WriteToVTable(ppVTable, hook, iIndex);
+  *pOriginal = reinterpret_cast<LPVOID>(WriteToVTable(ppVTable, hook, iIndex));
 
-  Hook hookInfo{ 0 };
-  hookInfo.Address = ppVTable;
+  util::hooks::Hook hookInfo{ 0 };
+  hookInfo.Address = (__int64)ppVTable;
   hookInfo.Index = iIndex;
-  hookInfo.Type = HookType::VTable;
+  hookInfo.Type = util::hooks::HookType::VTable;
   hookInfo.Original = pOriginal;
 
   m_CreatedHooks.emplace(name, hookInfo);
