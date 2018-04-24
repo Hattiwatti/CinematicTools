@@ -33,6 +33,7 @@ UI::~UI()
 bool UI::Initialize()
 {
   m_pCommonStates = std::make_unique<DirectX::CommonStates>(g_d3d11Device);
+  m_hCursor = LoadCursor(NULL, IDC_ARROW);
 
   /////////////////////////
   // ImGui Configuration //
@@ -251,6 +252,13 @@ void UI::OnResize()
 void UI::Update(double dt)
 {
   // For fancy background fading effects
+}
+
+void UI::Toggle()
+{
+  m_Enabled = !m_Enabled;
+  if (m_Enabled)
+    SetCursor(m_hCursor);
 }
 
 bool UI::CreateRenderTarget()

@@ -26,6 +26,7 @@ private:
   void DeleteTrack();
 
   void UpdateNodeBuffers();
+  void UpdateNameList();
 
 private:
   bool m_IsPlaying;

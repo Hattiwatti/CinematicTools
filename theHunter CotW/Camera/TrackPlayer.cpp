@@ -17,7 +17,8 @@ TrackPlayer::TrackPlayer() :
   m_CurrentTime(0),
   m_RunningId(2)
 {
-
+  m_Tracks.emplace_back("Track #1");
+  m_TrackNames.push_back(m_Tracks[0].Name.c_str());
 }
 
 TrackPlayer::~TrackPlayer()
@@ -208,13 +209,10 @@ void TrackPlayer::CreateTrack()
 {
   if (m_IsPlaying) return;
 
-  CameraTrack newTrack;
-  newTrack.Name = "Track #" + std::to_string(m_RunningId++);
-
-  m_Tracks.push_back(newTrack);
-  m_TrackNames.push_back(newTrack.Name.c_str());
-
+  m_Tracks.emplace_back("Track #" + std::to_string(m_RunningId++));
   m_SelectedTrack = m_Tracks.size() - 1;
+
+  UpdateNameList();
 }
 
 void TrackPlayer::DeleteTrack()
@@ -222,12 +220,10 @@ void TrackPlayer::DeleteTrack()
   if (m_IsPlaying || m_Tracks.size() <= 1) return;
 
   m_Tracks.erase(m_Tracks.begin() + m_SelectedTrack);
-  m_TrackNames.erase(m_TrackNames.begin() + m_SelectedTrack);
-
   if (m_SelectedTrack >= m_Tracks.size())
     m_SelectedTrack -= 1;
 
-  //GenerateDisplayNodes();
+  UpdateNameList();
 }
 
 void TrackPlayer::UpdateNodeBuffers()
@@ -326,4 +322,11 @@ void TrackPlayer::UpdateNodeBuffers()
 
   m_CurrentTime = 0;
   m_CurrentNode = 0;
+}
+
+void TrackPlayer::UpdateNameList()
+{
+  m_TrackNames.clear();
+  for (auto& track : m_Tracks)
+    m_TrackNames.push_back(track.Name.c_str());
 }

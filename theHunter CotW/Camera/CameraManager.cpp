@@ -54,6 +54,51 @@ void CameraManager::DrawUI()
 
   ImGui::Dummy(ImVec2(0, 10));
   ImGui::Dummy(ImVec2(300, 0));
+
+  ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1, 1, 1, 1));
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+  ImGui::PushFont(io.Fonts->Fonts[3]);
+  ImGui::SameLine();
+  if (ImGui::ToggleButton(m_CameraEnabled ? "Disable" : "Enable", ImVec2(100, 25), m_CameraEnabled, true))
+    ToggleCamera();
+  ImGui::SameLine();
+  if (ImGui::Button("Reset", ImVec2(100, 25)))
+    ResetCamera();
+
+  ImGui::PopFont();
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar();
+  ImGui::PushFont(io.Fonts->Fonts[4]);
+
+  ImGui::Dummy(ImVec2(0, 0));
+  ImGui::Columns(4, 0, false);
+  ImGui::NextColumn();
+  ImGui::SetColumnOffset(-1, 12);
+
+  ImGui::PushItemWidth(200);
+
+  ImGui::Text("Movement speed");
+  ImGui::InputFloat("##CameraMovementSpeed", &m_Camera.MovementSpeed, 0.1f, 1.0f, 2);
+  ImGui::Text("Rotation speed");
+  ImGui::InputFloat("##CameraRotationSpeed", &m_Camera.RotationSpeed, 0.1f, 1.0f, 2);
+  ImGui::Text("Roll speed");
+  ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
+  ImGui::Text("FoV speed");
+  ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FovSpeed, 0.1f, 1.0f, 2);
+
+  ImGui::NextColumn();
+  ImGui::SetColumnOffset(-1, 290);
+  ImGui::PushItemWidth(200);
+
+  ImGui::Text("Field of view");
+  ImGui::InputFloat("##CameraFoV", &m_Camera.FieldOfView, 1.f, 1.f, 2);
+
+  ImGui::NextColumn();
+  ImGui::SetColumnOffset(-1, 552);
+  ImGui::PushItemWidth(200);
+
+  m_TrackPlayer.DrawUI();
+  ImGui::PopFont();
 }
 
 void CameraManager::ReadConfig(INIReader* pReader)

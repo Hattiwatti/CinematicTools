@@ -131,7 +131,7 @@ static const std::map<Action, std::string> ActionUIStringMap = boost::assign::ma
 
 
 static const std::map<Action, int> DefaultKeyboardMap = boost::assign::map_list_of
-(ToggleUI, VK_F5)
+(ToggleUI, VK_END)
 (ToggleCamera, VK_INSERT)
 (ToggleHUD, VK_HOME)
 (ToggleFreezeTime, VK_DELETE)

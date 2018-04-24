@@ -383,10 +383,16 @@ void InputSystem::HotkeyUpdate()
   {
     if (g_hasFocus)
     {
+      if (IsActionDown(ToggleUI))
+      {
+        g_mainHandle->GetUI()->Toggle();
+        while (IsActionDown(ToggleUI))
+          Sleep(10);
+      }
 
       g_mainHandle->GetCameraManager()->HotkeyUpdate();
     }
-    Sleep(1);
+    Sleep(10);
   }
 }
 

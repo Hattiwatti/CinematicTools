@@ -41,17 +41,6 @@ bool Main::Initialize()
   util::log::Init();
   util::log::Write("Cinematic Tools for %s\n", g_gameName);
 
-  HMODULE hUser32 = GetModuleHandleA("user32.dll");
-
-  FARPROC pSetCursor = GetProcAddress(hUser32, "SetCursor");
-  FARPROC pSetCursorPos = GetProcAddress(hUser32, "SetCursorPos");
-  FARPROC pShowCursor = GetProcAddress(hUser32, "ShowCursor");
-
-  util::log::Write("SetCursor 0x%I64X", pSetCursor);
-  util::log::Write("SetCursorPos 0x%I64X", pSetCursorPos);
-  util::log::Write("ShowCursor 0x%I64X", pShowCursor);
-
-
   // Needed for ImGui + other functionality
   g_gameHwnd = FindWindowA(g_className, NULL);
   if (g_gameHwnd == NULL)
@@ -163,8 +152,11 @@ void Main::SaveConfig()
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
-    return CallWindowProc(g_origWndProc, hwnd, uMsg, wParam, lParam);
+  if (g_mainHandle->m_pUI->IsEnabled())
+  {
+    if (ImGui_ImplWin32_WndProcHandler(hwnd, uMsg, wParam, lParam))
+      return TRUE;
+  }
 
   switch (uMsg)
   {

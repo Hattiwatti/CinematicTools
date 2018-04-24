@@ -61,6 +61,8 @@ private:
   bool m_HasSeenWarning;
   bool m_ShowUpdateNotes;
 
+  HCURSOR m_hCursor;
+
 public:
   UI(UI const&) = delete;
   void operator=(UI const&) = delete;
