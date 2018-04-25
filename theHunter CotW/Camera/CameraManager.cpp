@@ -44,6 +44,12 @@ void CameraManager::Update(double dt)
 {
   if (!m_CameraEnabled) return;
 
+  if (m_UiRequestReset)
+  {
+    m_UiRequestReset = false;
+    ResetCamera();
+  }
+
   UpdateInput(dt);
   UpdateCamera(dt);
 }
@@ -62,8 +68,7 @@ void CameraManager::DrawUI()
   if (ImGui::ToggleButton(m_CameraEnabled ? "Disable" : "Enable", ImVec2(100, 25), m_CameraEnabled, true))
     ToggleCamera();
   ImGui::SameLine();
-  if (ImGui::Button("Reset", ImVec2(100, 25)))
-    ResetCamera();
+  m_UiRequestReset |= ImGui::Button("Reset", ImVec2(100, 25));
 
   ImGui::PopFont();
   ImGui::PopStyleColor();
@@ -159,9 +164,9 @@ void CameraManager::UpdateCamera(double dt)
   // Add delta positions
   if (!m_TrackPlayer.IsPlaying())
   {
-    vPosition += dt * m_Camera.dX * rotMatrix.r[0];
-    vPosition += dt * m_Camera.dY * rotMatrix.r[2];
-    vPosition += dt * m_Camera.dZ * rotMatrix.r[1];
+    vPosition += m_Camera.dX * rotMatrix.r[0];
+    vPosition += m_Camera.dY * rotMatrix.r[1];
+    vPosition += m_Camera.dZ * rotMatrix.r[2];
   }
 
   // Store results
@@ -197,9 +202,10 @@ void CameraManager::UpdateInput(double dt)
 
   if (m_KbmDisabled)
   {
-    XMFLOAT2 mouseState = pInput->GetMouseState();
-    m_Camera.dPitch += mouseState.y;
-    m_Camera.dYaw += mouseState.x;
+    //XMFLOAT2 mouseState = pInput->GetMousePos();
+    //m_Camera.dPitch += (mouseState.y - m_LastMousePosition.y)*dt;
+    //m_Camera.dYaw += (mouseState.x - m_LastMousePosition.x)*dt;
+    //m_LastMousePosition = mouseState;
   }
 }
 
@@ -208,7 +214,7 @@ void CameraManager::ToggleCamera()
   // If first enable, fetch game camera location
   if (m_FirstEnable)
   {
-    // Get game camera, set m_Camera.position
+    m_Camera.Position = XMFLOAT3(&m_ResetMatrix.m[3][0]);
     m_FirstEnable = false;
   }
 
@@ -228,7 +234,7 @@ void CameraManager::ResetCamera()
   m_CameraEnabled = false;
   Sleep(100);
 
-  // m_Camera.Position = pGameCameraSomewhere->m_position or w/e
+  m_Camera.Position = XMFLOAT3(&m_ResetMatrix.m[3][0]);
   m_Camera.Rotation = XMFLOAT4(0, 0, 0, 1);
 
   m_CameraEnabled = true;

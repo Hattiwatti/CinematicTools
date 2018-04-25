@@ -16,6 +16,9 @@ public:
   bool IsGamepadDisabled() { return m_CameraEnabled && m_GamepadDisabled; };
   bool IsKbmDisabled() { return m_CameraEnabled && m_KbmDisabled; };
 
+  DirectX::XMFLOAT4X4& GetCameraTrans() { return m_Camera.Transform; }
+  void SetResetMatrix(DirectX::XMFLOAT4X4 const& m) { m_ResetMatrix = m; }
+  
   void ReadConfig(INIReader* pReader);
   const std::string GetConfig();
 
@@ -33,8 +36,13 @@ private:
   bool m_GamepadDisabled;
   bool m_KbmDisabled;
 
+  bool m_UiRequestReset;
+  DirectX::XMFLOAT4X4 m_ResetMatrix;
+
   Camera m_Camera;
   TrackPlayer m_TrackPlayer;
+
+  DirectX::XMFLOAT2 m_LastMousePosition;
 
 public:
   CameraManager(CameraManager const&) = delete;

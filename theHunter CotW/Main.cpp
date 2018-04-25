@@ -106,6 +106,7 @@ void Main::Run()
 
     m_pCameraManager->Update(dt.count());
     m_pUI->Update(dt.count());
+    Sleep(1);
   }
 
   // Save config and disable hooks before exit
@@ -167,9 +168,6 @@ LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
   case WM_KEYDOWN:
     if (g_mainHandle->m_pInputSystem->HandleKeyMsg(wParam, lParam))
       return TRUE;
-    break;
-  case WM_MOUSEMOVE:
-    g_mainHandle->m_pInputSystem->HandleMouseMsg(lParam);
     break;
   case WM_SIZE:
     // Resize event

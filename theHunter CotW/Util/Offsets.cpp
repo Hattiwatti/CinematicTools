@@ -18,7 +18,9 @@ namespace
   std::unordered_map<std::string, __int64> m_HardcodedOffsets = map_list_of
   ("OFFSET_CLOCK", 0x1E08370)
   ("OFFSET_ENVIRONMENTGFX", 0x1E08368)
-  ("OFFSET_GRAPHICSENGINE", 0x1D7DAE0);
+  ("OFFSET_GRAPHICSENGINE", 0x1D7DAE0)
+    
+  ("OFFSET_CAMERAUPDATE", 0x2FECB0);
 
   bool DataCompare(BYTE* pData, BYTE* bSig, const char* szMask)
   {

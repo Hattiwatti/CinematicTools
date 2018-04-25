@@ -9,9 +9,11 @@
 
 #pragma comment(lib, "libMinHook.x64.lib")
 
+using namespace DirectX;
+
 // Function definitions
 typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
-typedef __int64(__fastcall* tCameraUpdateExample)(__int64, DirectX::XMFLOAT4X4*);
+typedef __int64(__fastcall* tCameraUpdate)(__int64, float, float);
 
 //////////////////////////
 ////   RENDER HOOKS   ////
@@ -40,23 +42,43 @@ DWORD WINAPI hIDXGISwapChain_Present(IDXGISwapChain* pSwapchain, UINT SyncInterv
 // override the game's camera. Some games might require multiple
 // hooks.
 
-tCameraUpdateExample oCameraUpdateExample = nullptr;
-__int64 __fastcall hCameraUpdateExample(__int64 pCamera, DirectX::XMFLOAT4X4* pMatrix)
+tCameraUpdate oCameraUpdate = nullptr;
+__int64 __fastcall hCameraUpdate(__int64 a1, float a2, float a3)
 {
-  // In this example the function could be an update function of the 
-  // camera object, that takes a new transform matrix as an argument.
-  // This is the transform we want to override with our own camera.
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
+  {
+    XMFLOAT4X4* pMatrix1 = reinterpret_cast<XMFLOAT4X4*>(a1);
+    XMFLOAT4X4* pMatrix2 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x2B0);
+    XMFLOAT4X4* pMatrix3 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x2F0);
+    XMFLOAT4X4* pMatrix4 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x3C0);
+    XMFLOAT4X4* pMatrix5 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x400);
+    XMFLOAT4X4* pMatrix6 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x3C0);
+    XMFLOAT4X4* pMatrix7 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x400);
+    XMFLOAT4X4* pMatrix8 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x4D0);
+    XMFLOAT4X4* pMatrix9 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x510);
 
-  // if(g_mainHandle->GetCameraManager()->IsCameraEnabled())
-  // {
-  //    XMFLOAT4X4& customTransform = g_mainHandle->GetCameraManager()->GetCameraTransform();
-  //    *pMatrix = customTransform;
-  //    return 0;
-  // }
+    XMFLOAT4X4& myTransform = g_mainHandle->GetCameraManager()->GetCameraTrans();
 
-  return oCameraUpdateExample(pCamera, pMatrix);
+    //*pMatrix1 = myTransform;
+    //*pMatrix2 = myTransform;
+    //*pMatrix3 = myTransform;
+    //*pMatrix4 = myTransform;
+    //*pMatrix5 = myTransform;
+    //*pMatrix6 = myTransform;
+    //*pMatrix7 = myTransform;
+    *pMatrix8 = myTransform;
+    *pMatrix9 = myTransform;
+    return 0;
+  }
+  else
+  {
+    XMFLOAT4X4* pMatrix1 = reinterpret_cast<XMFLOAT4X4*>(a1);
+    g_mainHandle->GetCameraManager()->SetResetMatrix(*pMatrix1);
+  }
+
+  return oCameraUpdate(a1, a2, a3);
 }
-
+ 
 
 //////////////////////////
 ////   INPUT HOOKS    ////
@@ -95,14 +117,14 @@ static void CreateHook(std::string const& name, __int64 target, PVOID hook, T or
   MH_STATUS result = MH_CreateHook((LPVOID)target, hook, pOriginal);
   if (result != MH_OK)
   {
-    log::Error("Could not create %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
+    util::log::Error("Could not create %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
     return;
   }
 
   result = MH_EnableHook((LPVOID)target);
   if (result != MH_OK)
   {
-    log::Error("Could not enable %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
+    util::log::Error("Could not enable %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
     return;
   }
 
@@ -150,6 +172,7 @@ void util::hooks::Init()
   if (status != MH_OK)
     util::log::Error("Failed to initialize MinHook, MH_STATUS 0x%X", status);
 
+  CreateHook("CameraUpdate", util::offsets::GetOffset("OFFSET_CAMERAUPDATE"), hCameraUpdate, &oCameraUpdate);
   CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
 
   util::log::Ok("Hooks initialized");

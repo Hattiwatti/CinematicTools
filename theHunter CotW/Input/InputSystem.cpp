@@ -37,6 +37,19 @@ void InputSystem::Initialize()
     util::log::Error("Unable to create DirectInput interface. HRESULT 0x%X", hr);
     util::log::Warning("DirectInput controllers unavailable");
   }
+  else
+  {
+    m_DInputInterface->CreateDevice(GUID_SysMouse, &m_DIMouse, NULL);
+    if (m_DIMouse == NULL)
+    {
+      util::log::Error("Failed to create DirectInput mouse");
+    }
+    else
+    {
+      hr = m_DIMouse->SetDataFormat(&c_dfDIMouse2);
+      hr = m_DIMouse->Acquire();
+    }
+  }
 
   // Create input-related threads
   std::thread actionThread(&InputSystem::ActionUpdate, this);
@@ -49,17 +62,17 @@ void InputSystem::Initialize()
 
 void InputSystem::HandleMouseMsg(LPARAM lParam)
 {
-  RECT windowRect;
-  if (!GetClientRect(g_gameHwnd, &windowRect))
-    return;
+  util::log::Write("WM_INPUT");
+  RAWINPUT raw{ 0 };
+  UINT szData = sizeof(RAWINPUT);
+  GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &szData, sizeof(RAWINPUTHEADER));
+  if (raw.header.dwType == RIM_TYPEMOUSE)
+  {
+    util::log::Write("Received RAWINPUT mouse message");
+  }
 
-  signed short xPosRelative = (lParam & 0xFFFF);
-  signed short yPosRelative = (lParam >> 16);
-
-  int deltaX = xPosRelative - (windowRect.right - windowRect.left) / 2;
-  int deltaY = yPosRelative - (windowRect.bottom - windowRect.top) / 2;
-
-  m_MouseState = DirectX::XMFLOAT2(deltaX * g_mouseSensitivity, deltaY * g_mouseSensitivity);
+  PRAWINPUT pRaw = &raw;
+  DefRawInputProc(&pRaw, 1, sizeof(RAWINPUTHEADER));
 }
 
 bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
@@ -272,6 +285,18 @@ void InputSystem::ActionUpdate()
             newWantedStates[i] += m_GamepadKeyStates[key];
           }
         }
+      }
+
+      if (m_DIMouse)
+      {
+        DIMOUSESTATE2 mouseState{ 0 };
+        m_DIMouse->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState);
+        if (mouseState.lX != 0)
+          util::log::Write("lX %d", mouseState.lX);
+        if (mouseState.lY != 0)
+          util::log::Write("lY %d", mouseState.lY);
+        if (mouseState.lZ != 0)
+          util::log::Write("lZ %d", mouseState.lZ);
       }
 
       if (!g_mainHandle->GetUI()->HasKeyboardFocus())
