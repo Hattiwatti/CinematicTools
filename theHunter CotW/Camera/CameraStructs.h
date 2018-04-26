@@ -14,8 +14,8 @@ struct CatmullRomNode
 
 struct Camera
 {
-  DirectX::XMFLOAT3 Position{ 0,0,0 };
-  DirectX::XMFLOAT4 Rotation{ 0,0,0,1 };
+  DirectX::XMFLOAT3 Position{ DirectX::XMFLOAT3(0,0,0) };
+  DirectX::XMFLOAT4 Rotation{ DirectX::XMFLOAT4(0,0,0,1) };
   float FieldOfView{ 50.f };
 
   float MovementSpeed{ 1.0f };

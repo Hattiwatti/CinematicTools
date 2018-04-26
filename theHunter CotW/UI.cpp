@@ -59,6 +59,7 @@ bool UI::Initialize()
   Style.Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
   Style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
   Style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
+  Style.Colors[ImGuiCol_FrameBg] = ImVec4(.2f, .2f, .2f, 1.0f);
   Style.Colors[ImGuiCol_Button] = ImVec4(.2f, .2f, .2f, 1.0f);
   Style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.26f, 0.26f, 1.0f);
   Style.Colors[ImGuiCol_ButtonActive] = ImVec4(1, 1, 1, 1);
@@ -118,6 +119,7 @@ bool UI::Initialize()
     return false;
 
   util::log::Ok("UI Initialized");
+  m_Enabled = true;
   return true;
 }
 
@@ -166,25 +168,20 @@ void UI::Draw()
     ImGui::GetWindowDrawList()->AddImage(m_TitleImage.pSRV.Get(), ImVec2(windowPos.x + 210, windowPos.y + 85), ImVec2(windowPos.x + 592, windowPos.y + 131));
 
     ImGui::PushFont(io.Fonts->Fonts[2]);
-    ImGui::Dummy(ImVec2(143, 33));
+    ImGui::Dummy(ImVec2(220, 33));
     ImGui::SameLine(0, 0);
 
-    if (ImGui::ToggleButton("CAMERA", ImVec2(158, 33), m_SelectedMenu == UIMenu_Camera, false))
+    if (ImGui::ToggleButton("CAMERA", ImVec2(160, 33), m_SelectedMenu == UIMenu_Camera, false))
       m_SelectedMenu = UIMenu_Camera;
 
     ImGui::SameLine(0, 20);
-    if (ImGui::ToggleButton("ENVIRONMENT", ImVec2(158, 33), m_SelectedMenu == UIMenu_Visuals, false))
-      m_SelectedMenu = UIMenu_Visuals;
-
-    ImGui::SameLine(0, 20);
-    if (ImGui::ToggleButton("MISC", ImVec2(158, 33), m_SelectedMenu == UIMenu_Misc, false))
+    if (ImGui::ToggleButton("MISC", ImVec2(160, 33), m_SelectedMenu == UIMenu_Misc, false))
       m_SelectedMenu = UIMenu_Misc;
 
     ImGui::PopFont();
 
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 143, windowPos.y + 76), ImVec2(windowPos.x + 301, windowPos.y + 76), 0xFF1C79E5, 2);
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 321, windowPos.y + 76), ImVec2(windowPos.x + 479, windowPos.y + 76), 0xFF1C79E5, 2);
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 499, windowPos.y + 76), ImVec2(windowPos.x + 657, windowPos.y + 76), 0xFF1C79E5, 2);
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 220, windowPos.y + 76), ImVec2(windowPos.x + 380, windowPos.y + 76), 0xFF1C79E5, 2);
+    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 400, windowPos.y + 76), ImVec2(windowPos.x + 560, windowPos.y + 76), 0xFF1C79E5, 2);
 
     ImGui::Dummy(ImVec2(0, 50));
     ImGui::Dummy(ImVec2(0, 0));
@@ -228,6 +225,9 @@ void UI::Draw()
     }
 
   } ImGui::End();
+
+  g_mainHandle->GetInputSystem()->DrawUI();
+
   ImGui::Render();
 
   m_HasKeyboardFocus = ImGui::GetIO().WantCaptureKeyboard;

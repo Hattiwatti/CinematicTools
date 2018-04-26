@@ -17,6 +17,7 @@ public:
   bool IsKbmDisabled() { return m_CameraEnabled && m_KbmDisabled; };
 
   DirectX::XMFLOAT4X4& GetCameraTrans() { return m_Camera.Transform; }
+  float GetCameraFov() { return DirectX::XMConvertToRadians(m_Camera.FieldOfView); }
   void SetResetMatrix(DirectX::XMFLOAT4X4 const& m) { m_ResetMatrix = m; }
   
   void ReadConfig(INIReader* pReader);
@@ -32,6 +33,7 @@ private:
 private:
   bool m_CameraEnabled;
   bool m_FirstEnable;
+  bool m_AutoReset;
 
   bool m_GamepadDisabled;
   bool m_KbmDisabled;
@@ -41,8 +43,6 @@ private:
 
   Camera m_Camera;
   TrackPlayer m_TrackPlayer;
-
-  DirectX::XMFLOAT2 m_LastMousePosition;
 
 public:
   CameraManager(CameraManager const&) = delete;

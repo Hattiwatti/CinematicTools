@@ -19,14 +19,17 @@ InputSystem::InputSystem() :
   m_SmoothActionStates(),
   m_GamepadKeyStates(),
   m_MouseState(),
-  m_KeyboardKeyNames()
+  m_KeyboardKeyNames(),
+  m_ShowUI(false)
 {
 
 }
 
 InputSystem::~InputSystem()
 {
-
+  m_ActionThread.join();
+  m_ControllerThread.join();
+  m_HotkeyThread.join();
 }
 
 void InputSystem::Initialize()
@@ -51,33 +54,19 @@ void InputSystem::Initialize()
     }
   }
 
-  // Create input-related threads
-  std::thread actionThread(&InputSystem::ActionUpdate, this);
-  std::thread controllerThread(&InputSystem::ControllerUpdate, this);
-  std::thread hotkeyThread(&InputSystem::HotkeyUpdate, this);
-  actionThread.detach();
-  controllerThread.detach();
-  hotkeyThread.detach();
+  m_ActionThread = std::thread(&InputSystem::ActionUpdate, this);
+  m_ControllerThread = std::thread(&InputSystem::ControllerUpdate, this);
+  m_HotkeyThread = std::thread(&InputSystem::HotkeyUpdate, this);
 }
 
 void InputSystem::HandleMouseMsg(LPARAM lParam)
 {
-  util::log::Write("WM_INPUT");
-  RAWINPUT raw{ 0 };
-  UINT szData = sizeof(RAWINPUT);
-  GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, &raw, &szData, sizeof(RAWINPUTHEADER));
-  if (raw.header.dwType == RIM_TYPEMOUSE)
-  {
-    util::log::Write("Received RAWINPUT mouse message");
-  }
-
-  PRAWINPUT pRaw = &raw;
-  DefRawInputProc(&pRaw, 1, sizeof(RAWINPUTHEADER));
+  // Not used
 }
 
 bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
 {
-  if (wParam == VK_ESCAPE)
+  if (wParam == VK_ESCAPE || !g_mainHandle->GetUI()->IsEnabled())
   {
     m_CaptureState.CaptureKb = false;
     m_CaptureState.CaptureGamepad = false;
@@ -93,13 +82,15 @@ bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
     // If the key is a modifier, save it, but don't stop capture
     m_CaptureState.CapturedKbKey = wParam << 8;
     m_CaptureState.CapturedKbName = util::KeyLparamToString(lParam) + " + ";
-    //m_KeyboardKeyNames[m_CaptureState.CaptureActionIndex] = m_CaptureState.CapturedKbName;
+    //m_KeyboardKeyNames[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbName;
   }
   else
   {
     m_CaptureState.CapturedKbKey |= wParam;
     m_CaptureState.CapturedKbName += util::KeyLparamToString(lParam);
 
+    util::log::Write("CapturedKbName %s", m_CaptureState.CapturedKbName.c_str());
+    m_KeyboardKeyNames[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbName;
     m_KeyboardBindings[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbKey;
     m_CaptureState.CaptureKb = false;
   }
@@ -109,7 +100,7 @@ bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
 
 void InputSystem::ShowUI()
 {
-
+  m_ShowUI = true;
 }
 
 void InputSystem::DrawUI()
@@ -120,6 +111,7 @@ void InputSystem::DrawUI()
     // stop capturing the hotkey!
     m_CaptureState.CaptureKb = false;
     m_CaptureState.CaptureGamepad = false;
+    return;
   }
 
   ImGuiIO& io = ImGui::GetIO();
@@ -155,7 +147,7 @@ void InputSystem::DrawUI()
       GamepadKey padKey = m_GamepadBindings[i];
 
       std::string kbString = m_KeyboardKeyNames[i];
-      if (m_CaptureState.CaptureKb)
+      if (m_CaptureState.CaptureKb && m_CaptureState.ActionIndex == i)
       {
         kbString = m_CaptureState.CapturedKbName;
         if (kbString.empty())
@@ -191,6 +183,22 @@ bool InputSystem::IsActionDown(Action action)
 float InputSystem::GetActionState(Action action)
 {
   return m_SmoothActionStates[action];
+}
+
+DirectX::XMFLOAT3 InputSystem::GetMouseState()
+{
+  DirectX::XMFLOAT3 dt(0,0,0);
+  if (!m_DIMouse) return dt;
+
+  // TODO: Look into buffered read
+  DIMOUSESTATE2 mouseState{ 0 };
+  if (FAILED(m_DIMouse->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState)))
+    return dt;
+
+  dt.x = mouseState.lX;
+  dt.y = mouseState.lY;
+  dt.z = mouseState.lZ;
+  return dt;
 }
 
 void InputSystem::ReadConfig(INIReader* pReader)
@@ -257,6 +265,7 @@ void InputSystem::ActionUpdate()
     
     if (g_hasFocus)
     {
+      
       if (m_Gamepad.IsPresent)
       {
         if (m_Gamepad.Type == GamepadType::XInput)
@@ -286,19 +295,7 @@ void InputSystem::ActionUpdate()
           }
         }
       }
-
-      if (m_DIMouse)
-      {
-        DIMOUSESTATE2 mouseState{ 0 };
-        m_DIMouse->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState);
-        if (mouseState.lX != 0)
-          util::log::Write("lX %d", mouseState.lX);
-        if (mouseState.lY != 0)
-          util::log::Write("lY %d", mouseState.lY);
-        if (mouseState.lZ != 0)
-          util::log::Write("lZ %d", mouseState.lZ);
-      }
-
+      
       if (!g_mainHandle->GetUI()->HasKeyboardFocus())
       {
         for (int i = 0; i < Action::ActionCount; ++i)
@@ -319,7 +316,6 @@ void InputSystem::ActionUpdate()
         }
       }
     }
-
 
     // Copy new values and perform smoothing
     m_WantedActionStates = newWantedStates;
@@ -345,7 +341,7 @@ void InputSystem::ActionUpdate()
       }
     }
 
-    Sleep(1);
+    Sleep(10);
   }
 }
 

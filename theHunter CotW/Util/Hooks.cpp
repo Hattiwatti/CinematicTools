@@ -14,6 +14,8 @@ using namespace DirectX;
 // Function definitions
 typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
 typedef __int64(__fastcall* tCameraUpdate)(__int64, float, float);
+typedef char(__fastcall* tCameraUpdate2)(__int64, __int64);
+typedef __int64(__fastcall* tInputUpdate)(__int64);
 
 //////////////////////////
 ////   RENDER HOOKS   ////
@@ -43,52 +45,66 @@ DWORD WINAPI hIDXGISwapChain_Present(IDXGISwapChain* pSwapchain, UINT SyncInterv
 // hooks.
 
 tCameraUpdate oCameraUpdate = nullptr;
+tCameraUpdate2 oCameraUpdate2 = nullptr;
+
 __int64 __fastcall hCameraUpdate(__int64 a1, float a2, float a3)
 {
   if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
   {
-    XMFLOAT4X4* pMatrix1 = reinterpret_cast<XMFLOAT4X4*>(a1);
-    XMFLOAT4X4* pMatrix2 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x2B0);
-    XMFLOAT4X4* pMatrix3 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x2F0);
-    XMFLOAT4X4* pMatrix4 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x3C0);
-    XMFLOAT4X4* pMatrix5 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x400);
-    XMFLOAT4X4* pMatrix6 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x3C0);
-    XMFLOAT4X4* pMatrix7 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x400);
-    XMFLOAT4X4* pMatrix8 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x4D0);
-    XMFLOAT4X4* pMatrix9 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x510);
+    XMFLOAT4X4* pMatrix1 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x4D0);
+    XMFLOAT4X4* pMatrix2 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x510);
+    float* pFov = reinterpret_cast<float*>(a1 + 0x550);
+    float* pModelFov = reinterpret_cast<float*>(a1 + 0x554);
 
     XMFLOAT4X4& myTransform = g_mainHandle->GetCameraManager()->GetCameraTrans();
-
-    //*pMatrix1 = myTransform;
-    //*pMatrix2 = myTransform;
-    //*pMatrix3 = myTransform;
-    //*pMatrix4 = myTransform;
-    //*pMatrix5 = myTransform;
-    //*pMatrix6 = myTransform;
-    //*pMatrix7 = myTransform;
-    *pMatrix8 = myTransform;
-    *pMatrix9 = myTransform;
+    *pMatrix1 = myTransform;
+    *pMatrix2 = myTransform;
+    *pFov = g_mainHandle->GetCameraManager()->GetCameraFov();
+    *pModelFov = 0;
     return 0;
   }
   else
   {
-    XMFLOAT4X4* pMatrix1 = reinterpret_cast<XMFLOAT4X4*>(a1);
+    XMFLOAT4X4* pMatrix1 = reinterpret_cast<XMFLOAT4X4*>(a1 + 0x510);
     g_mainHandle->GetCameraManager()->SetResetMatrix(*pMatrix1);
   }
 
   return oCameraUpdate(a1, a2, a3);
 }
  
+char __fastcall hCameraUpdate2(__int64 a1, __int64 a2)
+{
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
+  {
+    XMFLOAT4X4* pMatrix = reinterpret_cast<XMFLOAT4X4*>(a2);
+    float* pFov = reinterpret_cast<float*>(a2 + 0x80);
+    float* pModelFov = reinterpret_cast<float*>(a2 + 0x84);
+
+    *pMatrix = g_mainHandle->GetCameraManager()->GetCameraTrans();
+    *pFov = g_mainHandle->GetCameraManager()->GetCameraFov();
+    *pModelFov = 0;
+    return 1;
+  }
+
+  return oCameraUpdate2(a1, a2);
+}
 
 //////////////////////////
 ////   INPUT HOOKS    ////
 //////////////////////////
 
-// I like to try and provide a way to still move your character
-// while having the camera enabled. This usually works by finding
-// a function that specifically controls your character's input.
-// Useful when you want to record a video and be your own actor.
-// CameraManager provides IsKbmDisabled() and IsGamepadDisabled()
+tInputUpdate oInputUpdate = nullptr;
+
+__int64 __fastcall hInputUpdate(__int64 a1)
+{
+  if ((g_mainHandle->GetCameraManager()->IsCameraEnabled() &&
+    g_mainHandle->GetCameraManager()->IsKbmDisabled()) ||
+    g_mainHandle->GetUI()->IsEnabled())
+    return 0;
+
+  return oInputUpdate(a1);
+}
+
 
 //////////////////////////
 ////   OTHER HOOKS    ////
@@ -173,6 +189,8 @@ void util::hooks::Init()
     util::log::Error("Failed to initialize MinHook, MH_STATUS 0x%X", status);
 
   CreateHook("CameraUpdate", util::offsets::GetOffset("OFFSET_CAMERAUPDATE"), hCameraUpdate, &oCameraUpdate);
+  //CreateHook("CameraUpdate", util::offsets::GetOffset("OFFSET_CAMERAUPDATE2"), hCameraUpdate2, &oCameraUpdate2);
+  CreateHook("InputUpdate", util::offsets::GetOffset("OFFSET_INPUTUPDATE"), hInputUpdate, &oInputUpdate);
   CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
 
   util::log::Ok("Hooks initialized");

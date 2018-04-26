@@ -7,6 +7,7 @@ namespace Apex
 {
   class CClock
   {
+  public:
     BYTE Pad000[0x24];
     float m_TimeScale;
 
@@ -56,4 +57,37 @@ namespace Apex
       return *(CGraphicsEngine**)(util::offsets::GetOffset("OFFSET_GRAPHICSENGINE"));
     }
   };
+
+  class CUIManager
+  {
+  public:
+    BYTE Pad000[0x16A];
+    BYTE m_Enabled;
+
+  public:
+    static CUIManager* Singleton()
+    {
+      return *(CUIManager**)(util::offsets::GetOffset("OFFSET_UIMANAGER"));
+    }
+  };
+
+  class CWorldTime
+  {
+  public:
+    BYTE Pad000[0xE8];
+    float m_TimeOfDay;
+    BYTE Pad0EC[0x4];
+    float m_TimeScale;
+
+  public:
+    static CWorldTime * Singleton()
+    {
+      return *(CWorldTime**)(util::offsets::GetOffset("OFFSET_WORLDTIME"));
+    }
+  };
+
+  static float* GetTimeScale()
+  {
+    return (float*)(util::offsets::GetOffset("OFFSET_TIMESCALE"));
+  }
 }

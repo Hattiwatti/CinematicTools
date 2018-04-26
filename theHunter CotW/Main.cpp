@@ -106,7 +106,7 @@ void Main::Run()
 
     m_pCameraManager->Update(dt.count());
     m_pUI->Update(dt.count());
-    Sleep(1);
+    Sleep(10);
   }
 
   // Save config and disable hooks before exit

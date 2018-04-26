@@ -28,6 +28,10 @@ enum Action
   Camera_IncFov,
   Camera_DecFov,
 
+  Track_CreateNode,
+  Track_DeleteNode,
+  Track_Play,
+
   ActionCount
 };
 
@@ -106,7 +110,10 @@ static const std::map<Action, std::string> ActionStringMap = boost::assign::map_
 (Camera_RollLeft, "Camera_RollLeft")
 (Camera_RollRight, "Camera_RollRight")
 (Camera_IncFov, "Camera_IncFov")
-(Camera_DecFov, "Camera_DecFov");
+(Camera_DecFov, "Camera_DecFov")
+(Track_CreateNode, "Track_CreateNode")
+(Track_DeleteNode, "Track_DeleteNode")
+(Track_Play, "Track_Play");
 
 
 static const std::map<Action, std::string> ActionUIStringMap = boost::assign::map_list_of
@@ -127,7 +134,10 @@ static const std::map<Action, std::string> ActionUIStringMap = boost::assign::ma
 (Camera_RollLeft, "Roll left")
 (Camera_RollRight, "Roll right")
 (Camera_IncFov, "Increase FoV")
-(Camera_DecFov, "Decrease FoV");
+(Camera_DecFov, "Decrease FoV")
+(Track_CreateNode, "Create track node")
+(Track_DeleteNode, "Delete track node")
+(Track_Play, "Play track");
 
 
 static const std::map<Action, int> DefaultKeyboardMap = boost::assign::map_list_of
@@ -148,7 +158,10 @@ static const std::map<Action, int> DefaultKeyboardMap = boost::assign::map_list_
 (Camera_RollLeft, VK_NUMPAD1)
 (Camera_RollRight, VK_NUMPAD3)
 (Camera_IncFov, VK_PRIOR)
-(Camera_DecFov, VK_NEXT);
+(Camera_DecFov, VK_NEXT)
+(Track_CreateNode, 'F')
+(Track_DeleteNode, 'G')
+(Track_Play, 'P');
 
 static const std::map<Action, GamepadKey> DefaultGamepadMap = boost::assign::map_list_of
 (ToggleUI, GamepadKey::None)
@@ -168,4 +181,7 @@ static const std::map<Action, GamepadKey> DefaultGamepadMap = boost::assign::map
 (Camera_RollLeft, GamepadKey::LeftShoulder)
 (Camera_RollRight, GamepadKey::RightShoulder)
 (Camera_IncFov, GamepadKey::LeftThumb)
-(Camera_DecFov, GamepadKey::RightThumb);
+(Camera_DecFov, GamepadKey::RightThumb)
+(Track_CreateNode, GamepadKey::None)
+(Track_DeleteNode, GamepadKey::None)
+(Track_Play, GamepadKey::None);;

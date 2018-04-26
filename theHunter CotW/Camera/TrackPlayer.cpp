@@ -12,7 +12,7 @@ TrackPlayer::TrackPlayer() :
   m_LockRotation(true),
   m_LockFieldOfView(false),
   m_ManualPlay(false),
-  m_NodeTimeSpan(1.0f),
+  m_NodeTimeSpan(3.0f),
   m_CurrentNode(0),
   m_CurrentTime(0),
   m_RunningId(2)
@@ -174,17 +174,13 @@ void TrackPlayer::DrawUI()
   if (ImGui::Button("Delete", ImVec2(95, 25)))
     DeleteTrack();
   ImGui::Dummy(ImVec2(0, 5));
-  ImGui::Dummy(ImVec2(10, 0)); ImGui::SameLine(0, 0);
-  ImGui::Separator(ImVec2(180, 1));
   ImGui::Dummy(ImVec2(0, 5));
   ImGui::Text("Time multiplier");
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
   ImGui::InputFloat("##CameraTrackSpeedMultiplier", &m_NodeTimeSpan, 0.1, 0, 2);
 
-  ImGui::Dummy(ImVec2(0, 5));
-
   ImGui::Checkbox("Lock rotation", &m_LockRotation);
-  ImGui::Checkbox("Lock field of view", &m_LockRotation);
+  ImGui::Checkbox("Lock field of view", &m_LockFieldOfView);
   ImGui::Checkbox("Play manually", &m_ManualPlay);
   ImGui::PopStyleVar();
 }

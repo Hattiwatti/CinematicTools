@@ -1,6 +1,8 @@
 #include "CameraManager.h"
 #include "../Main.h"
+#include "../Util/Util.h"
 #include "../Util/ImGuiEXT.h"
+#include "../Apex.h"
 #include <Windows.h>
 
 using namespace DirectX;
@@ -10,8 +12,8 @@ CameraManager::CameraManager() :
   m_FirstEnable(true),
   m_GamepadDisabled(true),
   m_KbmDisabled(true),
-  m_Camera(),
-  m_TrackPlayer()
+  m_TrackPlayer(),
+  m_AutoReset(true)
 {
 
 }
@@ -34,9 +36,49 @@ void CameraManager::HotkeyUpdate()
 
   if (pInput->IsActionDown(Action::ToggleHUD))
   {
+    Apex::CUIManager* pUIManager = Apex::CUIManager::Singleton();
+    if (pUIManager)
+      pUIManager->m_Enabled = !pUIManager->m_Enabled;
 
     while (pInput->IsActionDown(Action::ToggleHUD))
       Sleep(1);
+  }
+
+  if (pInput->IsActionDown(Action::ToggleFreezeTime))
+  {
+    float* pTimeScale = Apex::GetTimeScale();
+    if (pTimeScale)
+      *pTimeScale = (*pTimeScale == 1.0f) ? 0.f : 1.0f;
+
+    while (pInput->IsActionDown(Action::ToggleFreezeTime))
+      Sleep(1);
+  }
+
+  if (m_CameraEnabled)
+  {
+    if (pInput->IsActionDown(Action::Track_CreateNode))
+    {
+      m_TrackPlayer.CreateNode(m_Camera);
+
+      while (pInput->IsActionDown(Action::Track_CreateNode))
+        Sleep(1);
+    }
+
+    if (pInput->IsActionDown(Action::Track_DeleteNode))
+    {
+      m_TrackPlayer.DeleteNode();
+
+      while (pInput->IsActionDown(Action::Track_DeleteNode))
+        Sleep(1);
+    }
+
+    if (pInput->IsActionDown(Action::Track_Play))
+    {
+      m_TrackPlayer.Toggle();
+
+      while (pInput->IsActionDown(Action::Track_Play))
+        Sleep(1);
+    }
   }
 }
 
@@ -89,7 +131,11 @@ void CameraManager::DrawUI()
   ImGui::Text("Roll speed");
   ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
   ImGui::Text("FoV speed");
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
   ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FovSpeed, 0.1f, 1.0f, 2);
+
+  ImGui::Checkbox("Reset camera automatically", &m_AutoReset);
+  ImGui::PopStyleVar();
 
   ImGui::NextColumn();
   ImGui::SetColumnOffset(-1, 290);
@@ -97,6 +143,17 @@ void CameraManager::DrawUI()
 
   ImGui::Text("Field of view");
   ImGui::InputFloat("##CameraFoV", &m_Camera.FieldOfView, 1.f, 1.f, 2);
+
+  Apex::CWorldTime* pWorldTime = Apex::CWorldTime::Singleton();
+
+  if (pWorldTime)
+  {
+    ImGui::Text("Time of Day");
+    ImGui::InputFloat("##ToD", &pWorldTime->m_TimeOfDay, 0.05, 0.1, 3);
+
+    ImGui::Text("ToD Timescale");
+    ImGui::InputFloat("##ToDTimeScale", &pWorldTime->m_TimeScale, 0.01, 0.1, 3);
+  }
 
   ImGui::NextColumn();
   ImGui::SetColumnOffset(-1, 552);
@@ -127,10 +184,10 @@ const std::string CameraManager::GetConfig()
 
 void CameraManager::UpdateCamera(double dt)
 {
-  XMVECTOR qPitch = XMQuaternionRotationRollPitchYaw(m_Camera.dPitch, 0, 0);
-  XMVECTOR qYaw = XMQuaternionRotationRollPitchYaw(0, m_Camera.dYaw, 0);
-  XMVECTOR qRoll = XMQuaternionRotationRollPitchYaw(0, 0, m_Camera.dRoll);
-  
+  XMVECTOR qPitch = XMQuaternionRotationRollPitchYaw(m_Camera.dPitch * dt * m_Camera.RotationSpeed, 0, 0);
+  XMVECTOR qYaw = XMQuaternionRotationRollPitchYaw(0, m_Camera.dYaw* dt * m_Camera.RotationSpeed, 0);
+  XMVECTOR qRoll = XMQuaternionRotationRollPitchYaw(0, 0, m_Camera.dRoll* dt * m_Camera.RollSpeed);
+
   XMVECTOR qRotation = XMLoadFloat4(&m_Camera.Rotation);
   XMVECTOR vPosition = XMLoadFloat3(&m_Camera.Position);
 
@@ -141,7 +198,7 @@ void CameraManager::UpdateCamera(double dt)
 
   // Make sure it's normalized
   qRotation = XMQuaternionNormalize(qRotation);
-  m_Camera.FieldOfView += m_Camera.dFov;
+  m_Camera.FieldOfView += m_Camera.dFov * dt * m_Camera.FovSpeed;
 
   // If a camera track is being played, get the current
   // state and overwrite position/rotation/FoV.
@@ -157,16 +214,15 @@ void CameraManager::UpdateCamera(double dt)
 
     vPosition = XMLoadFloat3(&resultNode.Position);
   }
-
   // Create rotation matrix
   XMMATRIX rotMatrix = XMMatrixRotationQuaternion(qRotation);
 
   // Add delta positions
   if (!m_TrackPlayer.IsPlaying())
   {
-    vPosition += m_Camera.dX * rotMatrix.r[0];
-    vPosition += m_Camera.dY * rotMatrix.r[1];
-    vPosition += m_Camera.dZ * rotMatrix.r[2];
+    vPosition += m_Camera.dX * rotMatrix.r[0] * dt * m_Camera.MovementSpeed;
+    vPosition += m_Camera.dY * rotMatrix.r[1] * dt * m_Camera.MovementSpeed;
+    vPosition += m_Camera.dZ * rotMatrix.r[2] * dt * m_Camera.MovementSpeed;
   }
 
   // Store results
@@ -176,44 +232,46 @@ void CameraManager::UpdateCamera(double dt)
   XMStoreFloat3(&m_Camera.Position, vPosition);
   XMStoreFloat4(&m_Camera.Rotation, qRotation);
   XMStoreFloat4x4(&m_Camera.Transform, rotMatrix);
+
+  m_Camera.dX = 0;
+  m_Camera.dY = 0;
+  m_Camera.dZ = 0;
+  m_Camera.dPitch = 0;
+  m_Camera.dYaw = 0;
+  m_Camera.dRoll = 0;
+  m_Camera.dFov = 0;
 }
 
 void CameraManager::UpdateInput(double dt)
 {
   InputSystem* pInput = g_mainHandle->GetInputSystem();
+  if (!g_hasFocus || g_mainHandle->GetUI()->HasKeyboardFocus())
+    return;
 
-  m_Camera.dX = pInput->GetActionState(Camera_Left)     - pInput->GetActionState(Camera_Right);
+  m_Camera.dX = pInput->GetActionState(Camera_Right)    - pInput->GetActionState(Camera_Left);
   m_Camera.dY = pInput->GetActionState(Camera_Up)       - pInput->GetActionState(Camera_Down);
-  m_Camera.dZ = pInput->GetActionState(Camera_Forward)  - pInput->GetActionState(Camera_Backward);
+  m_Camera.dZ = pInput->GetActionState(Camera_Backward)  - pInput->GetActionState(Camera_Forward);
 
   m_Camera.dPitch = pInput->GetActionState(Camera_PitchUp)  - pInput->GetActionState(Camera_PitchDown);
   m_Camera.dYaw   = pInput->GetActionState(Camera_YawLeft)  - pInput->GetActionState(Camera_YawRight);
   m_Camera.dRoll  = pInput->GetActionState(Camera_RollLeft) - pInput->GetActionState(Camera_RollRight);
   m_Camera.dFov   = pInput->GetActionState(Camera_IncFov)   - pInput->GetActionState(Camera_DecFov);
 
-  m_Camera.dX *= dt * m_Camera.MovementSpeed;
-  m_Camera.dY *= dt * m_Camera.MovementSpeed;
-  m_Camera.dZ *= dt * m_Camera.MovementSpeed;
-
-  m_Camera.dPitch *= dt * m_Camera.RotationSpeed;
-  m_Camera.dYaw   *= dt * m_Camera.RotationSpeed;
-  m_Camera.dRoll  *= dt * m_Camera.RotationSpeed;
-  m_Camera.dFov   *= dt * m_Camera.FovSpeed;
-
-  if (m_KbmDisabled)
+  if (m_KbmDisabled && !g_mainHandle->GetUI()->IsEnabled())
   {
-    //XMFLOAT2 mouseState = pInput->GetMousePos();
-    //m_Camera.dPitch += (mouseState.y - m_LastMousePosition.y)*dt;
-    //m_Camera.dYaw += (mouseState.x - m_LastMousePosition.x)*dt;
-    //m_LastMousePosition = mouseState;
+    XMFLOAT3 mouseState = pInput->GetMouseState();
+    m_Camera.dPitch -= mouseState.y*dt;
+    m_Camera.dYaw -= mouseState.x*dt;
+    m_Camera.dFov += mouseState.z*dt;
   }
 }
 
 void CameraManager::ToggleCamera()
 {
   // If first enable, fetch game camera location
-  if (m_FirstEnable)
+  if (m_FirstEnable || m_AutoReset)
   {
+    m_Camera.Rotation = XMFLOAT4(0, 0, 0, 1);
     m_Camera.Position = XMFLOAT3(&m_ResetMatrix.m[3][0]);
     m_FirstEnable = false;
   }
