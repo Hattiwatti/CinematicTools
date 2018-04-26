@@ -1,18 +1,21 @@
 #pragma once
-
-#include "Rendering/RenderImpl.h"
-#include <DirectXMath.h>
+#include <d3d11.h>
 #include <vector>
-#include <Windows.h>
+#include <wrl.h>
+
+using namespace Microsoft::WRL;
 
 enum SelectedMenu
 {
   UIMenu_Camera,
   UIMenu_Visuals,
-  UIMenu_Visuals_ColorCorrection,
-  UIMenu_Visuals_DepthOfField,
-  UIMenu_Visuals_Camera,
   UIMenu_Misc
+};
+
+struct ImageRsc
+{
+  ComPtr<ID3D11Texture2D> pTexture{ nullptr };
+  ComPtr<ID3D11ShaderResourceView> pSRV{ nullptr };
 };
 
 class UI
@@ -21,53 +24,42 @@ public:
   UI();
   ~UI();
 
-  bool Initialize(RendererImpl*);
-  void Release();
+  bool Initialize();
 
   void Draw();
+  void OnResize();
+  void Update(double dt);
+
+  bool IsEnabled() { return m_Enabled; }
+  bool HasMouseFocus() { return m_Enabled && m_HasMouseFocus; }
+  bool HasKeyboardFocus() { return m_Enabled && m_HasKeyboardFocus; }
+
   void Toggle();
-  void Update(double);
-
-  bool IsEnabled() { return m_enabled; }
-  bool IsInitialized() { return m_initialized; }
-  bool HasKeyboardFocus() { return m_hasKeyboardFocus && m_enabled; }
-  bool HasMouseFocus() { return m_hasMouseFocus && m_enabled; }
-
-  HHOOK GetMessageHook() { return hGetMessage; }
-  bool HasSeenWarning() { return m_hasSeenWarning; }
-
-  DirectX::XMFLOAT2 GetCursorPosition() { return m_mousePos; }
+  void ShowUpdateNotes();
 
 private:
-  bool m_enabled;
-  bool m_initialized;
+  bool CreateRenderTarget();
+  ImageRsc CreateImageFromResource(int resourceID);
 
-  RendererImpl* m_pRenderer;
+private:
+  bool m_Enabled;
+  SelectedMenu m_SelectedMenu;
 
-  bool m_hasMouseFocus;
-  bool m_hasKeyboardFocus;
-  DirectX::XMFLOAT2 m_mousePos;
+  ComPtr<ID3D11RenderTargetView> m_pRTV;
 
-  HHOOK hGetMessage;
-  static LRESULT __stdcall GetMessage_Callback(int nCode, WPARAM wParam, LPARAM lParam);
+  ImageRsc m_TitleImage;
+  std::vector<ImageRsc> m_BgImages;
+  bool m_IsFadingBg;
 
-  ImageWrapper* m_titleImg;
-  ImageWrapper* m_updateBg;
-  std::vector<ImageWrapper*> m_bgImages;
-  int m_bgIndex;
-  int m_nextIndex;
+  bool m_IsResizing;
+  int m_FramesToSkip;
 
-  SelectedMenu eSelectedMenu;
-  double m_opacity;
-  double m_dtFade;
-  bool m_isFading;
-
-  DWORD m_lastUpdateWindow;
-  bool m_hasSeenWarning;
+  bool m_HasMouseFocus;
+  bool m_HasKeyboardFocus;
+  bool m_HasSeenWarning;
+  bool m_ShowUpdateNotes;
 
 public:
   UI(UI const&) = delete;
   void operator=(UI const&) = delete;
 };
-
-extern HHOOK g_getMessageHook;

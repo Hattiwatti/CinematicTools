@@ -1,7 +1,11 @@
 #pragma once
-#include <Windows.h>
-#include "Rendering/Dx11Renderer.h"
+#include "Camera/CameraManager.h"
+#include "Input/InputSystem.h"
 #include "UI.h"
+
+#include "inih/cpp/INIReader.h"
+#include <memory>
+#include <Windows.h>
 
 class Main
 {
@@ -10,23 +14,48 @@ public:
   ~Main();
 
   bool Initialize();
-  void Release();
   void Run();
 
-  Dx11Renderer* GetRenderer() { return m_pRenderer.get(); }
+  CameraManager* GetCameraManager() { return m_pCameraManager.get(); }
+  InputSystem* GetInputSystem() { return m_pInputSystem.get(); }
   UI* GetUI() { return m_pUI.get(); }
 
-private:
+  void OnConfigChanged() { m_ConfigChanged = true; }
 
 private:
-  std::unique_ptr<Dx11Renderer> m_pRenderer;
+  void LoadConfig();
+  void SaveConfig();
+
+  static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+private:
+  std::unique_ptr<INIReader> m_pConfig;
+
+  std::unique_ptr<CameraManager> m_pCameraManager;
+  std::unique_ptr<InputSystem> m_pInputSystem;
   std::unique_ptr<UI> m_pUI;
+
+  bool m_ConfigChanged;
+  double m_dtConfigCheck;
 
 public:
   Main(Main const&) = delete;
   void operator=(Main const&) = delete;
 };
 
+extern bool g_shutdown;
+
+extern bool g_hasFocus;
+extern bool g_uiOwnsKeyboard;
+extern bool g_uiOwnsMouse;
+
 extern Main* g_mainHandle;
 extern HINSTANCE g_dllHandle;
-extern bool g_shutdown;
+
+extern HINSTANCE g_gameHandle;
+extern HWND g_gameHwnd;
+extern WNDPROC g_origWndProc;
+
+extern ID3D11Device* g_d3d11Device;
+extern ID3D11DeviceContext* g_d3d11Context;
+extern IDXGISwapChain* g_dxgiSwapChain;

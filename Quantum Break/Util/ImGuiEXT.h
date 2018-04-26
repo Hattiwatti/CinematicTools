@@ -2,6 +2,7 @@
 #include "../imgui/imgui.h"
 #include <functional>
 
+// Extensions and helpers for fancier ImGui elements
 namespace ImGui
 {
   IMGUI_API bool Checkbox(const char* label, bool* v, const ImVec2& subtractSize);
@@ -17,3 +18,4 @@ namespace ImGui
 
   void DrawWithBorders(std::function<void()> = nullptr);
 }
+
