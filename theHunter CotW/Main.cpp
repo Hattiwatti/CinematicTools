@@ -22,7 +22,9 @@ ID3D11DeviceContext* g_d3d11Context = nullptr;
 ID3D11Device* g_d3d11Device = nullptr;
 IDXGISwapChain* g_dxgiSwapChain = nullptr;
 
-Main::Main()
+Main::Main() :
+  m_dtConfigCheck(0),
+  m_ConfigChanged(false)
 {
 
 }
@@ -106,6 +108,18 @@ void Main::Run()
 
     m_pCameraManager->Update(dt.count());
     m_pUI->Update(dt.count());
+
+    m_dtConfigCheck += dt.count();
+    if (m_dtConfigCheck > 10.f)
+    {
+      m_dtConfigCheck = 0;
+      if (m_ConfigChanged)
+      {
+        m_ConfigChanged = false;
+        SaveConfig();
+      }
+    }
+
     Sleep(10);
   }
 
@@ -144,8 +158,8 @@ void Main::SaveConfig()
     return;
   }
 
-  file << m_pCameraManager->GetConfig();
-  file << m_pInputSystem->GetConfig();
+  file << m_pCameraManager->GetConfig() << std::endl;
+  file << m_pInputSystem->GetConfig() << std::endl;
   
   file.close();
 }

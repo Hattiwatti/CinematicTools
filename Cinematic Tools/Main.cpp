@@ -101,6 +101,20 @@ void Main::Run()
 
     m_pCameraManager->Update(dt.count());
     m_pUI->Update(dt.count());
+
+    // Check if config has been affected, if so, save it
+    m_dtConfigCheck += dt.count();
+    if (m_dtConfigCheck > 10.f)
+    {
+      m_dtConfigCheck = 0;
+      if (m_ConfigChanged)
+      {
+        m_ConfigChanged = false;
+        SaveConfig();
+      }
+    }
+
+    Sleep(10);
   }
 
   // Save config and disable hooks before exit

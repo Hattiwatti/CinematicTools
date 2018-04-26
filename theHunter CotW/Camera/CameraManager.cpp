@@ -123,16 +123,20 @@ void CameraManager::DrawUI()
   ImGui::SetColumnOffset(-1, 12);
 
   ImGui::PushItemWidth(200);
+  bool configChanged = false;
 
   ImGui::Text("Movement speed");
-  ImGui::InputFloat("##CameraMovementSpeed", &m_Camera.MovementSpeed, 0.1f, 1.0f, 2);
+  configChanged |= ImGui::InputFloat("##CameraMovementSpeed", &m_Camera.MovementSpeed, 0.1f, 1.0f, 2);
   ImGui::Text("Rotation speed");
-  ImGui::InputFloat("##CameraRotationSpeed", &m_Camera.RotationSpeed, 0.1f, 1.0f, 2);
+  configChanged |= ImGui::InputFloat("##CameraRotationSpeed", &m_Camera.RotationSpeed, 0.1f, 1.0f, 2);
   ImGui::Text("Roll speed");
-  ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
+  configChanged |= ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
   ImGui::Text("FoV speed");
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
-  ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FovSpeed, 0.1f, 1.0f, 2);
+  configChanged |= ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FovSpeed, 0.1f, 1.0f, 2);
+
+  if (configChanged)
+    g_mainHandle->OnConfigChanged();
 
   ImGui::Checkbox("Reset camera automatically", &m_AutoReset);
   ImGui::PopStyleVar();

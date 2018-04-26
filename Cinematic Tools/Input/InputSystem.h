@@ -5,6 +5,7 @@
 #include <array>
 #include <dinput.h>
 #include <DirectXMath.h>
+#include <thread>
 #include <Xinput.h>
 
 enum GamepadType
@@ -50,7 +51,7 @@ public:
 
   bool IsActionDown(Action action);
   float GetActionState(Action action);
-  DirectX::XMFLOAT2 GetMouseState() { return m_MouseState; }
+  DirectX::XMFLOAT3 GetMouseState();
 
   void ReadConfig(INIReader* pReader);
   const std::string GetConfig();
@@ -71,6 +72,7 @@ private:
 private:
   bool m_ShowUI;
 
+  RAWINPUTDEVICE m_RawInput;
   LPDIRECTINPUT8 m_DInputInterface;
   GamepadInfo m_Gamepad;
 
@@ -82,9 +84,15 @@ private:
   std::array<float, Action::ActionCount>            m_SmoothActionStates;
   std::array<float, GamepadKey::GamepadKey_Count>   m_GamepadKeyStates;
 
+  DirectX::XMFLOAT2 m_PrevMousePos;
   DirectX::XMFLOAT2 m_MouseState;
+  LPDIRECTINPUTDEVICE8 m_DIMouse;
 
   CaptureInfo m_CaptureState;
+
+  std::thread m_ActionThread;
+  std::thread m_ControllerThread;
+  std::thread m_HotkeyThread;
 
 public:
   InputSystem(InputSystem const&) = delete;

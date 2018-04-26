@@ -20,6 +20,8 @@ public:
   InputSystem* GetInputSystem() { return m_pInputSystem.get(); }
   UI* GetUI() { return m_pUI.get(); }
 
+  void OnConfigChanged() { m_ConfigChanged = true; }
+
 private:
   void LoadConfig();
   void SaveConfig();
@@ -32,6 +34,9 @@ private:
   std::unique_ptr<CameraManager> m_pCameraManager;
   std::unique_ptr<InputSystem> m_pInputSystem;
   std::unique_ptr<UI> m_pUI;
+
+  bool m_ConfigChanged;
+  double m_dtConfigCheck;
 
 public:
   Main(Main const&) = delete;

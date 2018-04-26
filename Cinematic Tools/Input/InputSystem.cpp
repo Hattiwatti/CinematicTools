@@ -5,6 +5,10 @@
 #include <boost/chrono.hpp>
 #include <thread>
 
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "XInput9_1_0.lib")
+
 // How long it takes for state of action to go from 1 to 0
 static const float g_actionClearTime = 0.2f;
 static const float g_mouseSensitivity = 1.0f;
@@ -15,14 +19,18 @@ InputSystem::InputSystem() :
   m_SmoothActionStates(),
   m_GamepadKeyStates(),
   m_MouseState(),
-  m_KeyboardKeyNames()
+  m_KeyboardKeyNames(),
+  m_ShowUI(false)
 {
 
 }
 
 InputSystem::~InputSystem()
 {
-
+  // Wait for threads to exit before destructing
+  m_ActionThread.join();
+  m_ControllerThread.join();
+  m_HotkeyThread.join();
 }
 
 void InputSystem::Initialize()
@@ -33,34 +41,33 @@ void InputSystem::Initialize()
     util::log::Error("Unable to create DirectInput interface. HRESULT 0x%X", hr);
     util::log::Warning("DirectInput controllers unavailable");
   }
+  else
+  {
+    m_DInputInterface->CreateDevice(GUID_SysMouse, &m_DIMouse, NULL);
+    if (m_DIMouse == NULL)
+    {
+      util::log::Error("Failed to create DirectInput mouse");
+    }
+    else
+    {
+      hr = m_DIMouse->SetDataFormat(&c_dfDIMouse2);
+      hr = m_DIMouse->Acquire();
+    }
+  }
 
-  // Create input-related threads
-  std::thread actionThread(&InputSystem::ActionUpdate, this);
-  std::thread controllerThread(&InputSystem::ControllerUpdate, this);
-  std::thread hotkeyThread(&InputSystem::HotkeyUpdate, this);
-  actionThread.detach();
-  controllerThread.detach();
-  hotkeyThread.detach();
+  m_ActionThread = std::thread(&InputSystem::ActionUpdate, this);
+  m_ControllerThread = std::thread(&InputSystem::ControllerUpdate, this);
+  m_HotkeyThread = std::thread(&InputSystem::HotkeyUpdate, this);
 }
 
 void InputSystem::HandleMouseMsg(LPARAM lParam)
 {
-  RECT windowRect;
-  if (!GetClientRect(g_gameHwnd, &windowRect))
-    return;
-
-  signed short xPosRelative = (lParam & 0xFFFF);
-  signed short yPosRelative = (lParam >> 16);
-
-  int deltaX = xPosRelative - (windowRect.right - windowRect.left) / 2;
-  int deltaY = yPosRelative - (windowRect.bottom - windowRect.top) / 2;
-
-  m_MouseState = DirectX::XMFLOAT2(deltaX * g_mouseSensitivity, deltaY * g_mouseSensitivity);
+  // Not used
 }
 
 bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
 {
-  if (wParam == VK_ESCAPE)
+  if (wParam == VK_ESCAPE || !g_mainHandle->GetUI()->IsEnabled())
   {
     m_CaptureState.CaptureKb = false;
     m_CaptureState.CaptureGamepad = false;
@@ -76,15 +83,18 @@ bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
     // If the key is a modifier, save it, but don't stop capture
     m_CaptureState.CapturedKbKey = wParam << 8;
     m_CaptureState.CapturedKbName = util::KeyLparamToString(lParam) + " + ";
-    //m_KeyboardKeyNames[m_CaptureState.CaptureActionIndex] = m_CaptureState.CapturedKbName;
+    //m_KeyboardKeyNames[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbName;
   }
   else
   {
     m_CaptureState.CapturedKbKey |= wParam;
     m_CaptureState.CapturedKbName += util::KeyLparamToString(lParam);
 
+    m_KeyboardKeyNames[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbName;
     m_KeyboardBindings[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbKey;
     m_CaptureState.CaptureKb = false;
+
+    g_mainHandle->OnConfigChanged();
   }
 
   return true;
@@ -92,7 +102,7 @@ bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
 
 void InputSystem::ShowUI()
 {
-
+  m_ShowUI = true;
 }
 
 void InputSystem::DrawUI()
@@ -103,6 +113,7 @@ void InputSystem::DrawUI()
     // stop capturing the hotkey!
     m_CaptureState.CaptureKb = false;
     m_CaptureState.CaptureGamepad = false;
+    return;
   }
 
   ImGuiIO& io = ImGui::GetIO();
@@ -138,7 +149,7 @@ void InputSystem::DrawUI()
       GamepadKey padKey = m_GamepadBindings[i];
 
       std::string kbString = m_KeyboardKeyNames[i];
-      if (m_CaptureState.CaptureKb)
+      if (m_CaptureState.CaptureKb && m_CaptureState.ActionIndex == i)
       {
         kbString = m_CaptureState.CapturedKbName;
         if (kbString.empty())
@@ -174,6 +185,22 @@ bool InputSystem::IsActionDown(Action action)
 float InputSystem::GetActionState(Action action)
 {
   return m_SmoothActionStates[action];
+}
+
+DirectX::XMFLOAT3 InputSystem::GetMouseState()
+{
+  DirectX::XMFLOAT3 dt(0, 0, 0);
+  if (!m_DIMouse) return dt;
+
+  // TODO: Look into buffered read
+  DIMOUSESTATE2 mouseState{ 0 };
+  if (FAILED(m_DIMouse->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState)))
+    return dt;
+
+  dt.x = mouseState.lX;
+  dt.y = mouseState.lY;
+  dt.z = mouseState.lZ;
+  return dt;
 }
 
 void InputSystem::ReadConfig(INIReader* pReader)
@@ -237,9 +264,10 @@ void InputSystem::ActionUpdate()
 
     std::array<float, Action::ActionCount> newWantedStates{ 0 };
     m_GamepadKeyStates.fill(0.f);
-    
+
     if (g_hasFocus)
     {
+
       if (m_Gamepad.IsPresent)
       {
         if (m_Gamepad.Type == GamepadType::XInput)
@@ -256,6 +284,7 @@ void InputSystem::ActionUpdate()
             {
               m_CaptureState.CaptureGamepad = false;
               m_GamepadBindings[m_CaptureState.ActionIndex] = static_cast<GamepadKey>(i);
+              g_mainHandle->OnConfigChanged();
             }
           }
         }
@@ -291,7 +320,6 @@ void InputSystem::ActionUpdate()
       }
     }
 
-
     // Copy new values and perform smoothing
     m_WantedActionStates = newWantedStates;
     for (int i = 0; i < Action::ActionCount; ++i)
@@ -316,7 +344,7 @@ void InputSystem::ActionUpdate()
       }
     }
 
-    Sleep(1);
+    Sleep(10);
   }
 }
 
@@ -379,10 +407,16 @@ void InputSystem::HotkeyUpdate()
   {
     if (g_hasFocus)
     {
+      if (IsActionDown(ToggleUI))
+      {
+        g_mainHandle->GetUI()->Toggle();
+        while (IsActionDown(ToggleUI))
+          Sleep(10);
+      }
 
       g_mainHandle->GetCameraManager()->HotkeyUpdate();
     }
-    Sleep(1);
+    Sleep(10);
   }
 }
 

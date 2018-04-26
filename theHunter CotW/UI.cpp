@@ -10,6 +10,7 @@
 
 const char* g_creditsText = "The following libraries are used in making the Cinematic Tools:\n"
 "MinHook by Tsuda Kageyu, inih by Ben Hoyt, ImGui by Omar Cornut, C++ libraries by Boost, DirectXTK and DirectXTex by Microsoft.\n\n"
+"Background images captured by Berdu\n(@Berduu on Twitter)\n\n"
 "Thank you for using the tools and making awesome stuff with it!\n\n"
 "Remember to report bugs at www.cinetools.xyz/bugs";
 
@@ -203,6 +204,8 @@ void UI::Draw()
 
         ImGui::PushFont(io.Fonts->Fonts[4]);
         ImGui::PushItemWidth(130);
+
+        ImGui::Dummy(ImVec2(0, 10));
 
         ImGui::DrawWithBorders([=]
         {

@@ -29,6 +29,7 @@ private:
 private:
   bool m_CameraEnabled;
   bool m_FirstEnable;
+  bool m_AutoReset;
 
   bool m_GamepadDisabled;
   bool m_KbmDisabled;

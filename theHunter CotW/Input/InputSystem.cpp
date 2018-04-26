@@ -89,10 +89,11 @@ bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
     m_CaptureState.CapturedKbKey |= wParam;
     m_CaptureState.CapturedKbName += util::KeyLparamToString(lParam);
 
-    util::log::Write("CapturedKbName %s", m_CaptureState.CapturedKbName.c_str());
     m_KeyboardKeyNames[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbName;
     m_KeyboardBindings[m_CaptureState.ActionIndex] = m_CaptureState.CapturedKbKey;
     m_CaptureState.CaptureKb = false;
+
+    g_mainHandle->OnConfigChanged();
   }
 
   return true;
@@ -282,6 +283,7 @@ void InputSystem::ActionUpdate()
             {
               m_CaptureState.CaptureGamepad = false;
               m_GamepadBindings[m_CaptureState.ActionIndex] = static_cast<GamepadKey>(i);
+              g_mainHandle->OnConfigChanged();
             }
           }
         }
