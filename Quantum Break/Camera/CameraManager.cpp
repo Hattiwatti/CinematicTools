@@ -1,5 +1,6 @@
 #include "CameraManager.h"
 #include "../Main.h"
+#include "../Util/Util.h"
 #include "../Util/ImGuiEXT.h"
 #include <Windows.h>
 
@@ -7,12 +8,11 @@ using namespace DirectX;
 
 CameraManager::CameraManager() :
   m_CameraEnabled(false),
-  m_AutoReset(true),
   m_FirstEnable(true),
   m_GamepadDisabled(true),
   m_KbmDisabled(true),
-  m_Camera(),
-  m_TrackPlayer()
+  m_TrackPlayer(),
+  m_AutoReset(true)
 {
 
 }
@@ -35,15 +35,58 @@ void CameraManager::HotkeyUpdate()
 
   if (pInput->IsActionDown(Action::ToggleHUD))
   {
+    float* HUDVisibility = (float*)((__int64)g_gameHandle + 0x1174118);
+    *HUDVisibility = (*HUDVisibility == 1.0f) ? 0 : 1.0f;
 
     while (pInput->IsActionDown(Action::ToggleHUD))
       Sleep(1);
+  }
+
+  if (pInput->IsActionDown(Action::ToggleFreezeTime))
+  {
+    m_TimeFreezeEnabled = !m_TimeFreezeEnabled;
+
+    while (pInput->IsActionDown(Action::ToggleFreezeTime))
+      Sleep(1);
+  }
+
+  if (m_CameraEnabled)
+  {
+    if (pInput->IsActionDown(Action::Track_CreateNode))
+    {
+      m_TrackPlayer.CreateNode(m_Camera);
+
+      while (pInput->IsActionDown(Action::Track_CreateNode))
+        Sleep(1);
+    }
+
+    if (pInput->IsActionDown(Action::Track_DeleteNode))
+    {
+      m_TrackPlayer.DeleteNode();
+
+      while (pInput->IsActionDown(Action::Track_DeleteNode))
+        Sleep(1);
+    }
+
+    if (pInput->IsActionDown(Action::Track_Play))
+    {
+      m_TrackPlayer.Toggle();
+
+      while (pInput->IsActionDown(Action::Track_Play))
+        Sleep(1);
+    }
   }
 }
 
 void CameraManager::Update(double dt)
 {
   if (!m_CameraEnabled) return;
+
+  if (m_UiRequestReset)
+  {
+    m_UiRequestReset = false;
+    ResetCamera();
+  }
 
   UpdateInput(dt);
   UpdateCamera(dt);
@@ -55,6 +98,58 @@ void CameraManager::DrawUI()
 
   ImGui::Dummy(ImVec2(0, 10));
   ImGui::Dummy(ImVec2(300, 0));
+
+  ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1, 1, 1, 1));
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.f);
+  ImGui::PushFont(io.Fonts->Fonts[3]);
+  ImGui::SameLine();
+  if (ImGui::ToggleButton(m_CameraEnabled ? "Disable" : "Enable", ImVec2(100, 25), m_CameraEnabled, true))
+    ToggleCamera();
+  ImGui::SameLine();
+  m_UiRequestReset |= ImGui::Button("Reset", ImVec2(100, 25));
+
+  ImGui::PopFont();
+  ImGui::PopStyleColor();
+  ImGui::PopStyleVar();
+  ImGui::PushFont(io.Fonts->Fonts[4]);
+
+  ImGui::Dummy(ImVec2(0, 0));
+  ImGui::Columns(4, 0, false);
+  ImGui::NextColumn();
+  ImGui::SetColumnOffset(-1, 12);
+
+  ImGui::PushItemWidth(200);
+  bool configChanged = false;
+
+  ImGui::Text("Movement speed");
+  configChanged |= ImGui::InputFloat("##CameraMovementSpeed", &m_Camera.MovementSpeed, 0.1f, 1.0f, 2);
+  ImGui::Text("Rotation speed");
+  configChanged |= ImGui::InputFloat("##CameraRotationSpeed", &m_Camera.RotationSpeed, 0.1f, 1.0f, 2);
+  ImGui::Text("Roll speed");
+  configChanged |= ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
+  ImGui::Text("FoV speed");
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
+  configChanged |= ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FovSpeed, 0.1f, 1.0f, 2);
+
+  if (configChanged)
+    g_mainHandle->OnConfigChanged();
+
+  ImGui::Checkbox("Reset camera automatically", &m_AutoReset);
+  ImGui::PopStyleVar();
+
+  ImGui::NextColumn();
+  ImGui::SetColumnOffset(-1, 290);
+  ImGui::PushItemWidth(200);
+
+  ImGui::Text("Field of view");
+  ImGui::InputFloat("##CameraFoV", &m_Camera.FieldOfView, 1.f, 1.f, 2);
+
+  ImGui::NextColumn();
+  ImGui::SetColumnOffset(-1, 552);
+  ImGui::PushItemWidth(200);
+
+  m_TrackPlayer.DrawUI();
+  ImGui::PopFont();
 }
 
 void CameraManager::ReadConfig(INIReader* pReader)
@@ -81,7 +176,7 @@ void CameraManager::UpdateCamera(double dt)
   XMVECTOR qPitch = XMQuaternionRotationRollPitchYaw(m_Camera.dPitch * dt * m_Camera.RotationSpeed, 0, 0);
   XMVECTOR qYaw = XMQuaternionRotationRollPitchYaw(0, m_Camera.dYaw* dt * m_Camera.RotationSpeed, 0);
   XMVECTOR qRoll = XMQuaternionRotationRollPitchYaw(0, 0, m_Camera.dRoll* dt * m_Camera.RollSpeed);
-  
+
   XMVECTOR qRotation = XMLoadFloat4(&m_Camera.Rotation);
   XMVECTOR vPosition = XMLoadFloat3(&m_Camera.Position);
 
@@ -108,7 +203,6 @@ void CameraManager::UpdateCamera(double dt)
 
     vPosition = XMLoadFloat3(&resultNode.Position);
   }
-
   // Create rotation matrix
   XMMATRIX rotMatrix = XMMatrixRotationQuaternion(qRotation);
 
@@ -143,13 +237,12 @@ void CameraManager::UpdateInput(double dt)
   if (!g_hasFocus || g_mainHandle->GetUI()->HasKeyboardFocus())
     return;
 
-  // These need to be changed according to the right/left-handness of game camera
   m_Camera.dX = pInput->GetActionState(Camera_Right) - pInput->GetActionState(Camera_Left);
   m_Camera.dY = pInput->GetActionState(Camera_Up) - pInput->GetActionState(Camera_Down);
-  m_Camera.dZ = pInput->GetActionState(Camera_Backward) - pInput->GetActionState(Camera_Forward);
+  m_Camera.dZ = pInput->GetActionState(Camera_Forward) - pInput->GetActionState(Camera_Backward);
 
-  m_Camera.dPitch = pInput->GetActionState(Camera_PitchUp) - pInput->GetActionState(Camera_PitchDown);
-  m_Camera.dYaw = pInput->GetActionState(Camera_YawLeft) - pInput->GetActionState(Camera_YawRight);
+  m_Camera.dPitch = pInput->GetActionState(Camera_PitchDown) - pInput->GetActionState(Camera_PitchUp);
+  m_Camera.dYaw = pInput->GetActionState(Camera_YawRight) - pInput->GetActionState(Camera_YawLeft);
   m_Camera.dRoll = pInput->GetActionState(Camera_RollLeft) - pInput->GetActionState(Camera_RollRight);
   m_Camera.dFov = pInput->GetActionState(Camera_IncFov) - pInput->GetActionState(Camera_DecFov);
 
@@ -167,7 +260,8 @@ void CameraManager::ToggleCamera()
   // If first enable, fetch game camera location
   if (m_FirstEnable || m_AutoReset)
   {
-    // Get game camera, set m_Camera.position
+    m_Camera.Rotation = XMFLOAT4(0, 0, 0, 1);
+    m_Camera.Position = XMFLOAT3(&m_ResetMatrix.m[3][0]);
     m_FirstEnable = false;
   }
 
@@ -187,7 +281,7 @@ void CameraManager::ResetCamera()
   m_CameraEnabled = false;
   Sleep(100);
 
-  // m_Camera.Position = pGameCameraSomewhere->m_position or w/e
+  m_Camera.Position = XMFLOAT3(&m_ResetMatrix.m[3][0]);
   m_Camera.Rotation = XMFLOAT4(0, 0, 0, 1);
 
   m_CameraEnabled = true;

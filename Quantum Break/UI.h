@@ -34,6 +34,8 @@ public:
   bool HasMouseFocus() { return m_Enabled && m_HasMouseFocus; }
   bool HasKeyboardFocus() { return m_Enabled && m_HasKeyboardFocus; }
 
+  HCURSOR GetCursor() { return m_hCursor; }
+
   void Toggle();
   void ShowUpdateNotes();
 
@@ -43,6 +45,7 @@ private:
 
 private:
   bool m_Enabled;
+  HCURSOR m_hCursor;
   SelectedMenu m_SelectedMenu;
 
   ComPtr<ID3D11RenderTargetView> m_pRTV;

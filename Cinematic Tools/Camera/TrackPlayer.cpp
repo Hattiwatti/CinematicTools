@@ -12,12 +12,13 @@ TrackPlayer::TrackPlayer() :
   m_LockRotation(true),
   m_LockFieldOfView(false),
   m_ManualPlay(false),
-  m_NodeTimeSpan(1.0f),
+  m_NodeTimeSpan(3.0f),
   m_CurrentNode(0),
   m_CurrentTime(0),
   m_RunningId(2)
 {
-
+  m_Tracks.emplace_back("Track #1");
+  m_TrackNames.push_back(m_Tracks[0].Name.c_str());
 }
 
 TrackPlayer::~TrackPlayer()
@@ -96,8 +97,8 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
   bool goForward = false; // Time is increasing, should we move on to the next nodes?
   bool goBackward = false; // Time is decreasing, should we move on to the previous nodes?
 
-  // Detect if we should move onto the next/previous node. If we're at the
-  // start or the end, return those nodes.
+                           // Detect if we should move onto the next/previous node. If we're at the
+                           // start or the end, return those nodes.
   while ((goForward = m_CurrentTime >= nodes[m_CurrentNode + 1].TimeStamp) ||
     (goBackward = m_CurrentTime < nodes[m_CurrentNode].TimeStamp))
   {
@@ -149,10 +150,10 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
   XMVECTOR vPos2 = XMLoadFloat3(&n2->Position);
   XMVECTOR vPos3 = XMLoadFloat3(&n3->Position);
 
-  resultNode.FieldOfView = util::math::CatmullRomInterpolate(n0->FieldOfView, 
-                                                            n1->FieldOfView, 
-                                                            n2->FieldOfView, 
-                                                            n3->FieldOfView, mu);
+  resultNode.FieldOfView = util::math::CatmullRomInterpolate(n0->FieldOfView,
+    n1->FieldOfView,
+    n2->FieldOfView,
+    n3->FieldOfView, mu);
 
   XMVECTOR resultRot = XMVectorCatmullRom(qRot0, qRot1, qRot2, qRot3, mu);
   XMVECTOR resultPos = XMVectorCatmullRom(vPos0, vPos1, vPos2, vPos3, mu);
@@ -173,17 +174,13 @@ void TrackPlayer::DrawUI()
   if (ImGui::Button("Delete", ImVec2(95, 25)))
     DeleteTrack();
   ImGui::Dummy(ImVec2(0, 5));
-  ImGui::Dummy(ImVec2(10, 0)); ImGui::SameLine(0, 0);
-  ImGui::Separator(ImVec2(180, 1));
   ImGui::Dummy(ImVec2(0, 5));
   ImGui::Text("Time multiplier");
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
   ImGui::InputFloat("##CameraTrackSpeedMultiplier", &m_NodeTimeSpan, 0.1, 0, 2);
 
-  ImGui::Dummy(ImVec2(0, 5));
-
   ImGui::Checkbox("Lock rotation", &m_LockRotation);
-  ImGui::Checkbox("Lock field of view", &m_LockRotation);
+  ImGui::Checkbox("Lock field of view", &m_LockFieldOfView);
   ImGui::Checkbox("Play manually", &m_ManualPlay);
   ImGui::PopStyleVar();
 }
@@ -191,7 +188,7 @@ void TrackPlayer::DrawUI()
 void TrackPlayer::DrawNodes()
 {
   PrimitiveBatch<VertexPositionColor>* pPrimitiveBatch = nullptr; // TODO: Create primitiveBatch somewhere or write a custom shader
-  
+
   const UINT strides = 0;
   const UINT offset = 0;
 
@@ -208,13 +205,10 @@ void TrackPlayer::CreateTrack()
 {
   if (m_IsPlaying) return;
 
-  CameraTrack newTrack;
-  newTrack.Name = "Track #" + std::to_string(m_RunningId++);
-
-  m_Tracks.push_back(newTrack);
-  m_TrackNames.push_back(newTrack.Name.c_str());
-
+  m_Tracks.emplace_back("Track #" + std::to_string(m_RunningId++));
   m_SelectedTrack = m_Tracks.size() - 1;
+
+  UpdateNameList();
 }
 
 void TrackPlayer::DeleteTrack()
@@ -222,12 +216,10 @@ void TrackPlayer::DeleteTrack()
   if (m_IsPlaying || m_Tracks.size() <= 1) return;
 
   m_Tracks.erase(m_Tracks.begin() + m_SelectedTrack);
-  m_TrackNames.erase(m_TrackNames.begin() + m_SelectedTrack);
-
   if (m_SelectedTrack >= m_Tracks.size())
     m_SelectedTrack -= 1;
 
-  //GenerateDisplayNodes();
+  UpdateNameList();
 }
 
 void TrackPlayer::UpdateNodeBuffers()
@@ -326,4 +318,11 @@ void TrackPlayer::UpdateNodeBuffers()
 
   m_CurrentTime = 0;
   m_CurrentNode = 0;
+}
+
+void TrackPlayer::UpdateNameList()
+{
+  m_TrackNames.clear();
+  for (auto& track : m_Tracks)
+    m_TrackNames.push_back(track.Name.c_str());
 }

@@ -41,19 +41,19 @@ void InputSystem::Initialize()
     util::log::Error("Unable to create DirectInput interface. HRESULT 0x%X", hr);
     util::log::Warning("DirectInput controllers unavailable");
   }
-  else
-  {
-    m_DInputInterface->CreateDevice(GUID_SysMouse, &m_DIMouse, NULL);
-    if (m_DIMouse == NULL)
-    {
-      util::log::Error("Failed to create DirectInput mouse");
-    }
-    else
-    {
-      hr = m_DIMouse->SetDataFormat(&c_dfDIMouse2);
-      hr = m_DIMouse->Acquire();
-    }
-  }
+//   else
+//   {
+//     m_DInputInterface->CreateDevice(GUID_SysMouse, &m_DIMouse, NULL);
+//     if (m_DIMouse == NULL)
+//     {
+//       util::log::Error("Failed to create DirectInput mouse");
+//     }
+//     else
+//     {
+//       hr = m_DIMouse->SetDataFormat(&c_dfDIMouse2);
+//       hr = m_DIMouse->Acquire();
+//     }
+//   }
 
   m_ActionThread = std::thread(&InputSystem::ActionUpdate, this);
   m_ControllerThread = std::thread(&InputSystem::ControllerUpdate, this);

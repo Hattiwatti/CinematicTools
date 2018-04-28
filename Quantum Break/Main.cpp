@@ -1,23 +1,33 @@
 #include "Main.h"
 #include "Util/Util.h"
+#include "Northlight.h"
+
 #include <boost/filesystem.hpp>
 #include <boost/chrono.hpp>
 #include <fstream>
 
-static const char* g_gameName = "theHunter: CoTW";
-static const char* g_moduleName = "theHunterCoTW_F";
-static const char* g_className = "thcotw";
+static const char* g_gameName = "Quantum Break";
+static const char* g_moduleName = "QuantumBreak.exe";
+static const char* g_className = "AppWindowClass";
+static const char* g_windowTitle = "Quantum Break - 1.0.126.0307";
 static const char* g_configFile = "./Cinematic Tools/config.ini";
 
 Main* g_mainHandle = nullptr;
 HINSTANCE g_dllHandle = NULL;
 HINSTANCE g_gameHandle = NULL;
+HWND g_gameHwnd = NULL;
 WNDPROC g_origWndProc = 0;
 bool g_shutdown = false;
+bool g_hasFocus = false;
 
 ID3D11DeviceContext* g_d3d11Context = nullptr;
 ID3D11Device* g_d3d11Device = nullptr;
 IDXGISwapChain* g_dxgiSwapChain = nullptr;
+
+HMODULE g_aiModule = NULL;
+HMODULE g_d3dModule = NULL;
+HMODULE g_rendererModule = NULL;
+HMODULE g_rlModule = NULL;
 
 Main::Main()
 {
@@ -41,8 +51,12 @@ bool Main::Initialize()
   g_gameHwnd = FindWindowA(g_className, NULL);
   if (g_gameHwnd == NULL)
   {
-    util::log::Error("Failed to retrieve window handle, GetLastError 0x%X", GetLastError());
-    return false;
+    g_gameHwnd = FindWindowA(NULL, g_windowTitle);
+    if (g_gameHwnd == NULL)
+    {
+      util::log::Error("Failed to retrieve window handle, GetLastError 0x%X", GetLastError());
+      return false;
+    }
   }
 
   // Used for relative offsets
@@ -53,6 +67,11 @@ bool Main::Initialize()
     return false;
   }
 
+  g_aiModule = GetModuleHandleA("ai_x64_f");
+  g_d3dModule = GetModuleHandleA("d3d_x64_f");
+  g_rendererModule = GetModuleHandleA("renderer_x64_f");
+  g_rlModule = GetModuleHandleA("rl_x64_f");
+
   // Subclass the window with a new WndProc to catch messages
   g_origWndProc = (WNDPROC)SetWindowLongPtr(g_gameHwnd, -4, (LONG_PTR)&WndProc);
   if (g_origWndProc == 0)
@@ -61,9 +80,9 @@ bool Main::Initialize()
     return false;
   }
 
-  g_d3d11Device = nullptr; // Fetch ID3D11Device
-  g_d3d11Context = nullptr; // Fetch context
-  g_dxgiSwapChain = nullptr; // Fetch SwapChain
+  g_d3d11Device = Northlight::d3d::Device::GetDevice(); // Fetch ID3D11Device
+  g_d3d11Context = Northlight::d3d::Device::GetContext(); // Fetch context
+  g_dxgiSwapChain = Northlight::d3d::Device::Singleton()->m_pSwapchain; // Fetch SwapChain
 
   if (!g_d3d11Context || !g_d3d11Device || !g_dxgiSwapChain)
   {

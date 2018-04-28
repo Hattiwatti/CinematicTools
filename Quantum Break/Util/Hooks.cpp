@@ -1,5 +1,6 @@
 #include "Util.h"
 #include "../Main.h"
+#include "../Northlight.h"
 
 #include <MinHook.h>
 #include <d3d11.h>
@@ -9,9 +10,19 @@
 
 #pragma comment(lib, "libMinHook.x64.lib")
 
+using namespace DirectX;
+
 // Function definitions
 typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
-typedef __int64(__fastcall* tCameraUpdateExample)(__int64, DirectX::XMFLOAT4X4*);
+typedef HCURSOR(WINAPI* tSetCursor)(HCURSOR);
+typedef BOOL(WINAPI* tSetCursorPos)(int x, int y);
+typedef int(WINAPI* tShowCursor)(BOOL show);
+
+typedef int(__fastcall* tCameraUpdate)(__int64, __int64, __int64, __int64);
+typedef void(__fastcall* tSetFov)(__int64, float);
+
+typedef __int64(__fastcall* tGetXinputState)(int, __int64);
+typedef void(__fastcall* tUpdateTime)(__int64, __int64);
 
 //////////////////////////
 ////   RENDER HOOKS   ////
@@ -40,43 +51,97 @@ DWORD WINAPI hIDXGISwapChain_Present(IDXGISwapChain* pSwapchain, UINT SyncInterv
 // override the game's camera. Some games might require multiple
 // hooks.
 
-tCameraUpdateExample oCameraUpdateExample = nullptr;
-__int64 __fastcall hCameraUpdateExample(__int64 pCamera, DirectX::XMFLOAT4X4* pMatrix)
+tCameraUpdate oCameraUpdate = nullptr;
+tSetFov oSetFov = nullptr;
+
+int __fastcall hCameraUpdate(__int64 a1, __int64 a2, __int64 a3, __int64 a4)
 {
-  // In this example the function could be an update function of the 
-  // camera object, that takes a new transform matrix as an argument.
-  // This is the transform we want to override with our own camera.
+  XMFLOAT4X3* gameCamera = reinterpret_cast<XMFLOAT4X3*>(a3);
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
+  {
+    XMMATRIX cameraMatrix = XMLoadFloat4x4(&g_mainHandle->GetCameraManager()->GetCameraTrans());
+    XMStoreFloat4x3(gameCamera, cameraMatrix);
+  }
+  else
+  {
+    XMMATRIX gameCameraMatrix = XMLoadFloat4x3(gameCamera);
+    XMFLOAT4X4 resetMatrix;
+    XMStoreFloat4x4(&resetMatrix, gameCameraMatrix);
+    g_mainHandle->GetCameraManager()->SetResetMatrix(resetMatrix);
+  }
 
-  // if(g_mainHandle->GetCameraManager()->IsCameraEnabled())
-  // {
-  //    XMFLOAT4X4& customTransform = g_mainHandle->GetCameraManager()->GetCameraTransform();
-  //    *pMatrix = customTransform;
-  //    return 0;
-  // }
-
-  return oCameraUpdateExample(pCamera, pMatrix);
+  return oCameraUpdate(a1, a2, a3, a4);
 }
 
+void __fastcall hSetFov(__int64 a1, float a2)
+{
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
+    return oSetFov(a1, g_mainHandle->GetCameraManager()->GetCameraFov());
+
+  return oSetFov(a1, a2);
+}
 
 //////////////////////////
 ////   INPUT HOOKS    ////
 //////////////////////////
 
-// I like to try and provide a way to still move your character
-// while having the camera enabled. This usually works by finding
-// a function that specifically controls your character's input.
-// Useful when you want to record a video and be your own actor.
-// CameraManager provides IsKbmDisabled() and IsGamepadDisabled()
+tGetXinputState oGetXinputState = nullptr;
+tSetCursor oSetCursor = nullptr;
+tSetCursorPos oSetCursorPos = nullptr;
+tShowCursor oShowCursor = nullptr;
+
+__int64 __fastcall hGetXinputState(int a1, __int64 a2)
+{
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled() && 
+      g_mainHandle->GetCameraManager()->IsGamepadDisabled())
+    return 0;
+  else
+    return oGetXinputState(a1, a2);
+}
+
+HCURSOR WINAPI hSetCursor(HCURSOR cursor)
+{
+  if (cursor == NULL)
+  {
+    if (g_mainHandle->GetUI()->IsEnabled())
+      return oSetCursor(g_mainHandle->GetUI()->GetCursor());
+  }
+
+  return oSetCursor(cursor);
+}
+
+BOOL WINAPI hSetCursorPos(int x, int y)
+{
+  if (g_mainHandle->GetUI()->IsEnabled())
+    return TRUE;
+
+  return oSetCursorPos(x, y);
+}
+
+int WINAPI hShowCursor(BOOL show)
+{
+  if (g_mainHandle->GetUI()->IsEnabled())
+    return oShowCursor(TRUE);
+
+  return oShowCursor(show);
+}
 
 //////////////////////////
 ////   OTHER HOOKS    ////
 //////////////////////////
 
-// These could be hooks on AI to disable them, object iterators
-// to find certain components, something to disable the usual
-// outlines on friendly players/characters etc...
-// Hooks on cursor functions are usually needed to show the mouse
-// when tools UI is open.
+tUpdateTime oUpdateTime = nullptr;
+
+void __fastcall hUpdateTime(__int64 a1, __int64 a2)
+{
+  if (g_mainHandle->GetCameraManager()->IsTimeFrozen())
+  {
+    Northlight::rl::Time::Singleton()->m_WorldTimeScale = 0;
+    Northlight::rl::Time::Singleton()->m_EffectTimeScale = 0;
+  }
+
+  return oUpdateTime(a1, a2);
+}
 
 
 /*----------------------------------------------------------------*/
@@ -95,14 +160,14 @@ static void CreateHook(std::string const& name, __int64 target, PVOID hook, T or
   MH_STATUS result = MH_CreateHook((LPVOID)target, hook, pOriginal);
   if (result != MH_OK)
   {
-    log::Error("Could not create %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
+    util::log::Error("Could not create %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
     return;
   }
 
   result = MH_EnableHook((LPVOID)target);
   if (result != MH_OK)
   {
-    log::Error("Could not enable %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
+    util::log::Error("Could not enable %s hook. MH_STATUS 0x%X error code 0x%X", name, result, GetLastError());
     return;
   }
 
@@ -149,9 +214,32 @@ void util::hooks::Init()
   if (status != MH_OK)
     util::log::Error("Failed to initialize MinHook, MH_STATUS 0x%X", status);
 
-  CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
+  __int64 CameraUpdate = (__int64)g_gameHandle + 0x3A1FC0;
+  __int64 SetFov = (__int64)GetProcAddress(g_rlModule, "?setFov@PerspectiveView@m@@QEAAXM@Z");
+  __int64 GetXinputState = (__int64)GetProcAddress(g_rlModule, "?rmdXInputGetState@@YAKKPEAU_rmd_XINPUT_STATE@@@Z");
+  __int64 TimeUpdate = (__int64)GetProcAddress(g_rlModule, "?write@CachedFile@r@@UEAAXPEBX_K@Z");
 
+
+  CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
+  CreateHook("CameraUpdate", CameraUpdate, hCameraUpdate, &oCameraUpdate);
+  CreateHook("CameraFoV", SetFov, hSetFov, &oSetFov);
+  CreateHook("GetXinputState", GetXinputState, hGetXinputState, &oGetXinputState);
+  CreateHook("TimeUpdate", TimeUpdate, hUpdateTime, &oUpdateTime);
+
+  HMODULE hUser32 = GetModuleHandleA("user32.dll");
+
+  FARPROC pSetCursor = GetProcAddress(hUser32, "SetCursor");
+  CreateHook("SetCursor", (__int64)pSetCursor, hSetCursor, &oSetCursor);
+
+  FARPROC pSetCursorPos = GetProcAddress(hUser32, "SetCursorPos");
+  CreateHook("SetCursorPos", (__int64)pSetCursorPos, hSetCursorPos, &oSetCursorPos);
+
+  FARPROC pShowCursor = GetProcAddress(hUser32, "ShowCursor");
+  CreateHook("ShowCursor", (__int64)pShowCursor, hShowCursor, &oShowCursor);
+
+  util::log::Ok("Hooks initialized");
 }
+
 
 // In some cases it's useful or even required to disable all hooks or just certain ones
 void util::hooks::SetHookState(bool enable, std::string const& name)

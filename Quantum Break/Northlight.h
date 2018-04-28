@@ -4,11 +4,14 @@
 
 extern HMODULE g_aiModule;
 extern HMODULE g_d3dModule;
+extern HMODULE g_rendererModule;
+extern HMODULE g_rlModule;
 
 namespace Northlight
 {
   namespace ai
   {
+    class Character;
     class WorldConception;
 
     class AIManager
@@ -82,6 +85,7 @@ namespace Northlight
   {
     class Device
     {
+    public:
       BYTE Pad000[0x20];
       IDXGISwapChain* m_pSwapchain;
       BYTE Pad028[0x30];
@@ -130,5 +134,36 @@ namespace Northlight
       ClassTypeInfo* m_current;
       ClassTypeInfo* m_next;
     };
+  }
+
+  namespace rl
+  {
+    class Time
+    {
+    public:
+      BYTE Pad000[0x38];
+      float m_WorldTimeScale;
+      float m_EffectTimeScale;
+
+    public:
+      static Time* Singleton()
+      {
+        return *(Time**)(GetProcAddress(g_rlModule, "?sm_pInstance@Time@r@@0PEAV12@EA"));
+      }
+    };
+  }
+
+  namespace renderer
+  {
+    static void SetResolution(int width, int height)
+    {
+      int* pResolution = (int*)((__int64)g_rendererModule + 0x49AE28);
+
+      for (int i = 0; i < 5; ++i)
+      {
+        pResolution[i * 2] = width;
+        pResolution[i * 2 + 1] = height;
+      }
+    }
   }
 }

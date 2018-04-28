@@ -8,6 +8,7 @@ DWORD WINAPI RunCT(LPVOID lpArg)
 
   delete g_mainHandle;
 
+  FreeLibraryAndExitThread(g_dllHandle, 0);
   return 0;
 }
 

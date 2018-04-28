@@ -140,6 +140,9 @@
     <ClInclude Include="Camera\TrackPlayer.h">
       <Filter>Source Files\Camera</Filter>
     </ClInclude>
+    <ClInclude Include="Northlight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Cinematic Tools.rc">
@@ -147,7 +150,23 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\imgui_PixelShader.cso" />
-    <None Include="Resources\imgui_VertexShader.cso" />
+    <None Include="Resources\imgui_PixelShader.cso">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\imgui_VertexShader.cso">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="Resources\Purista Semibold.ttf" />
+    <Font Include="Resources\segoeui.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\CT_Title.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="Resources\bg1.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

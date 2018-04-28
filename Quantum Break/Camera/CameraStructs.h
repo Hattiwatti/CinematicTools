@@ -44,4 +44,9 @@ struct CameraTrack
   Microsoft::WRL::ComPtr<ID3D11Buffer> VertexBuffer;
   Microsoft::WRL::ComPtr<ID3D11Buffer> IndexBuffer;
   int IndexCount;
+
+  CameraTrack(std::string const& name)
+  {
+    Name = name;
+  }
 };

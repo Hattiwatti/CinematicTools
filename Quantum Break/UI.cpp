@@ -3,6 +3,7 @@
 #include "Util/Util.h"
 #include "Util/ImGuiEXT.h"
 #include "imgui/imgui_impl_dx11.h"
+#include "resource.h"
 
 #include <WICTextureLoader.h>
 #pragma comment(lib, "DirectXTK.lib")
@@ -31,6 +32,8 @@ UI::~UI()
 
 bool UI::Initialize()
 {
+  m_hCursor = LoadCursor(NULL, IDC_ARROW);
+
   /////////////////////////
   // ImGui Configuration //
   /////////////////////////
@@ -78,33 +81,33 @@ bool UI::Initialize()
   void* pData;
   DWORD szData;
 
-//   if (!util::GetResource(IDR_FONT_PURISTA, pData, szData))
-//   {
-//     util::log::Error("Failed to load IDR_FONT_PURISTASEMI from resources");
-//     return false;
-//   }
-// 
-//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 24, &fontConfig);
-//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 20, &fontOffsetConfig);
-//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 18, &fontOffsetConfig);
-// 
-//   if (!util::GetResource(IDR_FONT_SEGOE, pData, dataSize))
-//   {
-//     util::log::Error("Failed to load IDR_FONT_SEGOEUI from resources");
-//     return false;
-//   }
-// 
-//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 16, &fontConfig);
-//   io.Fonts->AddFontFromMemoryTTF(pData, szData, 20, &fontConfig);
+  if (!util::GetResource(IDR_FONT_PURISTA, pData, szData))
+  {
+    util::log::Error("Failed to load IDR_FONT_PURISTASEMI from resources");
+    return false;
+  }
+
+  io.Fonts->AddFontFromMemoryTTF(pData, szData, 24, &fontConfig);
+  io.Fonts->AddFontFromMemoryTTF(pData, szData, 20, &fontOffsetConfig);
+  io.Fonts->AddFontFromMemoryTTF(pData, szData, 18, &fontOffsetConfig);
+
+  if (!util::GetResource(IDR_FONT_SEGOE, pData, szData))
+  {
+    util::log::Error("Failed to load IDR_FONT_SEGOEUI from resources");
+    return false;
+  }
+
+  io.Fonts->AddFontFromMemoryTTF(pData, szData, 16, &fontConfig);
+  io.Fonts->AddFontFromMemoryTTF(pData, szData, 20, &fontConfig);
 
 
   //////////////////////////////////////
   // Background & title image loading //
   //////////////////////////////////////
 
-  //m_TitleImage = CreateImageFromResource(IDR_IMG_TITLE);
-  //for (int i = IDR_IMG_BG1; i <= IDR_IMG_BG1; ++i)
-  //  m_BgImages.emplace_back(CreateImageFromResource(i));
+  m_TitleImage = CreateImageFromResource(IDR_IMG_TITLE);
+  for (int i = IDR_IMG_BG1; i <= IDR_IMG_BG1; ++i)
+    m_BgImages.emplace_back(CreateImageFromResource(i));
 
 
   if (!CreateRenderTarget())
@@ -237,6 +240,11 @@ void UI::OnResize()
 void UI::Update(double dt)
 {
   // For fancy background fading effects
+}
+
+void UI::Toggle()
+{
+  m_Enabled = !m_Enabled;
 }
 
 bool UI::CreateRenderTarget()
