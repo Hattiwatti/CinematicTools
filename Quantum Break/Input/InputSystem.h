@@ -43,7 +43,8 @@ public:
   ~InputSystem();
 
   void Initialize();
-  void HandleMouseMsg(LPARAM lParam);
+  void HandleMouseMsg(UINT uMsg, WPARAM wParam, LPARAM lParam);
+  void HandleRawInput(LPARAM lParam);
   bool HandleKeyMsg(WPARAM wParam, LPARAM lParam);
 
   void ShowUI();
@@ -84,8 +85,7 @@ private:
   std::array<float, Action::ActionCount>            m_SmoothActionStates;
   std::array<float, GamepadKey::GamepadKey_Count>   m_GamepadKeyStates;
 
-  DirectX::XMFLOAT2 m_PrevMousePos;
-  DirectX::XMFLOAT2 m_MouseState;
+  DirectX::XMFLOAT3 m_MouseState;
   LPDIRECTINPUTDEVICE8 m_DIMouse;
 
   CaptureInfo m_CaptureState;

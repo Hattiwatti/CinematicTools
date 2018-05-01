@@ -2,6 +2,7 @@
 #include "../Main.h"
 #include "../Util/Util.h"
 #include "../Util/ImGuiEXT.h"
+#include "../Northlight.h"
 #include <Windows.h>
 
 using namespace DirectX;
@@ -12,7 +13,9 @@ CameraManager::CameraManager() :
   m_GamepadDisabled(true),
   m_KbmDisabled(true),
   m_TrackPlayer(),
-  m_AutoReset(true)
+  m_AutoReset(true),
+  m_OverrideAspectRatio(false),
+  m_AspectRatio(1.777777f)
 {
 
 }
@@ -45,6 +48,14 @@ void CameraManager::HotkeyUpdate()
   if (pInput->IsActionDown(Action::ToggleFreezeTime))
   {
     m_TimeFreezeEnabled = !m_TimeFreezeEnabled;
+    if (!m_TimeFreezeEnabled)
+    {
+      Sleep(100);
+      BYTE* pTimeFreeze = (BYTE*)((__int64)g_gameHandle + 0x116F5B2);
+      BYTE* pTimeFreeze2 = (BYTE*)((__int64)g_gameHandle + 0x116F5D0);
+      *pTimeFreeze = 0;
+      *pTimeFreeze2 = 0;
+    }
 
     while (pInput->IsActionDown(Action::ToggleFreezeTime))
       Sleep(1);
@@ -144,6 +155,10 @@ void CameraManager::DrawUI()
   ImGui::Text("Field of view");
   ImGui::InputFloat("##CameraFoV", &m_Camera.FieldOfView, 1.f, 1.f, 2);
 
+  ImGui::Text("Aspect ratio");
+  ImGui::InputFloat("##CameraRatio", &m_AspectRatio);
+  ImGui::Checkbox("Override aspect ratio", &m_OverrideAspectRatio);
+
   ImGui::NextColumn();
   ImGui::SetColumnOffset(-1, 552);
   ImGui::PushItemWidth(200);
@@ -218,6 +233,7 @@ void CameraManager::UpdateCamera(double dt)
   rotMatrix.r[3] = vPosition;
   rotMatrix.r[3].m128_f32[3] = 1.0f;
 
+  m_Camera.Matrix = rotMatrix;
   XMStoreFloat3(&m_Camera.Position, vPosition);
   XMStoreFloat4(&m_Camera.Rotation, qRotation);
   XMStoreFloat4x4(&m_Camera.Transform, rotMatrix);
@@ -249,9 +265,9 @@ void CameraManager::UpdateInput(double dt)
   if (m_KbmDisabled && !g_mainHandle->GetUI()->IsEnabled())
   {
     XMFLOAT3 mouseState = pInput->GetMouseState();
-    m_Camera.dPitch -= mouseState.y*dt;
-    m_Camera.dYaw -= mouseState.x*dt;
-    m_Camera.dFov += mouseState.z*dt;
+    m_Camera.dPitch += mouseState.y * dt;
+    m_Camera.dYaw += mouseState.x * dt;
+    m_Camera.dFov += mouseState.z * dt;
   }
 }
 
@@ -262,6 +278,7 @@ void CameraManager::ToggleCamera()
   {
     m_Camera.Rotation = XMFLOAT4(0, 0, 0, 1);
     m_Camera.Position = XMFLOAT3(&m_ResetMatrix.m[3][0]);
+    m_Camera.Matrix.r[3] = XMLoadFloat3(&m_Camera.Position);
     m_FirstEnable = false;
   }
 

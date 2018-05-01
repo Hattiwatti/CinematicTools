@@ -31,6 +31,8 @@ struct Camera
   float dRoll{ 0 };
   float dFov{ 0 };
 
+  DirectX::XMMATRIX Matrix{ DirectX::XMMatrixIdentity() };
+
   DirectX::XMFLOAT4X4 Transform{  1,0,0,0,
                                   0,1,0,0,
                                   0,0,1,0,
@@ -49,4 +51,12 @@ struct CameraTrack
   {
     Name = name;
   }
+};
+
+struct DepthOfField
+{
+  float BokehScale{ 3.f };
+  float FStop{ 2.5f };
+  float FocalDistance{ 10.f };
+  bool Enabled{ false };
 };

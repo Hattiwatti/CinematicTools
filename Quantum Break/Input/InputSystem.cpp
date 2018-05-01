@@ -41,28 +41,55 @@ void InputSystem::Initialize()
     util::log::Error("Unable to create DirectInput interface. HRESULT 0x%X", hr);
     util::log::Warning("DirectInput controllers unavailable");
   }
-//   else
-//   {
-//     m_DInputInterface->CreateDevice(GUID_SysMouse, &m_DIMouse, NULL);
-//     if (m_DIMouse == NULL)
-//     {
-//       util::log::Error("Failed to create DirectInput mouse");
-//     }
-//     else
-//     {
-//       hr = m_DIMouse->SetDataFormat(&c_dfDIMouse2);
-//       hr = m_DIMouse->Acquire();
-//     }
-//   }
+
+  RAWINPUTDEVICE Rid;
+  Rid.usUsagePage = 0x01;
+  Rid.usUsage = 0x02;
+  Rid.dwFlags = 0;   
+  Rid.hwndTarget = g_gameHwnd;
+
+  if (RegisterRawInputDevices(&Rid, 1, sizeof(Rid)) == FALSE)
+    util::log::Error("RegisterRawInputDevices failed");
 
   m_ActionThread = std::thread(&InputSystem::ActionUpdate, this);
   m_ControllerThread = std::thread(&InputSystem::ControllerUpdate, this);
   m_HotkeyThread = std::thread(&InputSystem::HotkeyUpdate, this);
 }
 
-void InputSystem::HandleMouseMsg(LPARAM lParam)
+void InputSystem::HandleMouseMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  // Not used
+  switch (uMsg)
+  {
+  case WM_MOUSEMOVE:
+    RECT windowRect;
+    if (!GetClientRect(g_gameHwnd, &windowRect))
+      return;
+
+    m_MouseState.x = (lParam & 0xFFFF) - (windowRect.right - windowRect.left) / 2;
+    m_MouseState.y = (lParam >> 16) - (windowRect.bottom - windowRect.top) / 2;
+    break;
+  case WM_MOUSEWHEEL:
+    m_MouseState.z = GET_WHEEL_DELTA_WPARAM(wParam);
+    break;
+  }
+}
+
+void InputSystem::HandleRawInput(LPARAM lParam)
+{
+  UINT dwSize = 0;
+  GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+  //printf("WM_INPUT 0x%X\n", dwSize);
+
+  BYTE* lpb = new BYTE[dwSize];
+  GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+
+  RAWINPUT* raw = (RAWINPUT*)lpb;
+  if (raw->header.dwType == RIM_TYPEMOUSE)
+  {
+    m_MouseState.x += raw->data.mouse.lLastX;
+    m_MouseState.y += raw->data.mouse.lLastY;
+    m_MouseState.z += raw->data.mouse.usButtonData;
+  }
 }
 
 bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
@@ -189,18 +216,9 @@ float InputSystem::GetActionState(Action action)
 
 DirectX::XMFLOAT3 InputSystem::GetMouseState()
 {
-  DirectX::XMFLOAT3 dt(0, 0, 0);
-  if (!m_DIMouse) return dt;
-
-  // TODO: Look into buffered read
-  DIMOUSESTATE2 mouseState{ 0 };
-  if (FAILED(m_DIMouse->GetDeviceState(sizeof(DIMOUSESTATE2), &mouseState)))
-    return dt;
-
-  dt.x = mouseState.lX;
-  dt.y = mouseState.lY;
-  dt.z = mouseState.lZ;
-  return dt;
+  DirectX::XMFLOAT3 stateCopy = m_MouseState;
+  m_MouseState = DirectX::XMFLOAT3(0, 0, 0);
+  return stateCopy;
 }
 
 void InputSystem::ReadConfig(INIReader* pReader)

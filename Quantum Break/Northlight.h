@@ -134,16 +134,17 @@ namespace Northlight
       ClassTypeInfo* m_current;
       ClassTypeInfo* m_next;
     };
-  }
 
-  namespace rl
-  {
     class Time
     {
     public:
       BYTE Pad000[0x38];
       float m_WorldTimeScale;
       float m_EffectTimeScale;
+      float m_UnkTimeScale1;
+      float m_UnkTimeScale2;
+      BYTE Pad048[0x4];
+      float m_VariableDelta;
 
     public:
       static Time* Singleton()
@@ -151,10 +152,54 @@ namespace Northlight
         return *(Time**)(GetProcAddress(g_rlModule, "?sm_pInstance@Time@r@@0PEAV12@EA"));
       }
     };
+
+    static bool IsPaused()
+    {
+      return *(bool*)((__int64)g_gameHandle + 0x116F5B2);
+    }
   }
 
-  namespace renderer
+  namespace rend
   {
+
+    class Spotlight
+    {
+    public:
+      BYTE Pad000[0xAC0];
+
+    public:
+      Spotlight()
+      {
+        typedef __int64(__fastcall* tCreateSpotLight)(rend::Spotlight* pThis);
+        tCreateSpotLight CreateSpotLight = (tCreateSpotLight)GetProcAddress(g_rendererModule, "??0SpotLight@rend@@QEAA@XZ");
+
+        CreateSpotLight(this);
+      }
+
+
+    };
+
+    static void UpdateResolution()
+    {
+      RECT windowRect;
+      if (!GetWindowRect(g_gameHwnd, &windowRect))
+        return;
+
+      int width = windowRect.right - windowRect.left;
+      int height = windowRect.bottom - windowRect.top;
+
+      util::log::Write("UpdateResolution %d %d", width, height);
+      if (width < 100 || height < 100)
+        return;
+
+      int* pResolution = (int*)((__int64)g_rendererModule + 0x49AE28);
+      for (int i = 0; i < 2; ++i)
+      {
+        pResolution[i * 2] = width;
+        pResolution[i * 2 + 1] = height;
+      }
+    }
+
     static void SetResolution(int width, int height)
     {
       int* pResolution = (int*)((__int64)g_rendererModule + 0x49AE28);
@@ -164,6 +209,15 @@ namespace Northlight
         pResolution[i * 2] = width;
         pResolution[i * 2 + 1] = height;
       }
+    }
+  
+    static void SetDoFParameters(float bokeh, float fstop, float focalDistance)
+    {
+      typedef void(__fastcall* tSetDofParameter)(__int64, float);
+
+      __int64 pDOFWrapper = *(__int64*)((__int64)g_rendererModule + 0x495628);
+      tSetDofParameter SetBokehScale = (tSetDofParameter)((__int64)g_rendererModule + 0x819C0);
+      SetBokehScale(pDOFWrapper, bokeh);
     }
   }
 }

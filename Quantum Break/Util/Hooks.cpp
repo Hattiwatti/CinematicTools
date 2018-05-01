@@ -14,15 +14,15 @@ using namespace DirectX;
 
 // Function definitions
 typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
-typedef HCURSOR(WINAPI* tSetCursor)(HCURSOR);
 typedef BOOL(WINAPI* tSetCursorPos)(int x, int y);
-typedef int(WINAPI* tShowCursor)(BOOL show);
 
 typedef int(__fastcall* tCameraUpdate)(__int64, __int64, __int64, __int64);
+typedef __int64(__fastcall* tAspectRatioHook)(__int64);
 typedef void(__fastcall* tSetFov)(__int64, float);
 
 typedef __int64(__fastcall* tGetXinputState)(int, __int64);
-typedef void(__fastcall* tUpdateTime)(__int64, __int64);
+typedef __int64(__fastcall* tUpdateTime)(double);
+
 
 //////////////////////////
 ////   RENDER HOOKS   ////
@@ -53,14 +53,14 @@ DWORD WINAPI hIDXGISwapChain_Present(IDXGISwapChain* pSwapchain, UINT SyncInterv
 
 tCameraUpdate oCameraUpdate = nullptr;
 tSetFov oSetFov = nullptr;
+tAspectRatioHook oAspectRatioHook = nullptr;
 
 int __fastcall hCameraUpdate(__int64 a1, __int64 a2, __int64 a3, __int64 a4)
 {
   XMFLOAT4X3* gameCamera = reinterpret_cast<XMFLOAT4X3*>(a3);
   if (g_mainHandle->GetCameraManager()->IsCameraEnabled())
   {
-    XMMATRIX cameraMatrix = XMLoadFloat4x4(&g_mainHandle->GetCameraManager()->GetCameraTrans());
-    XMStoreFloat4x3(gameCamera, cameraMatrix);
+    XMStoreFloat4x3(gameCamera, g_mainHandle->GetCameraManager()->GetMatrix());
   }
   else
   {
@@ -81,14 +81,25 @@ void __fastcall hSetFov(__int64 a1, float a2)
   return oSetFov(a1, a2);
 }
 
+__int64 __fastcall hAspectRatioHook(__int64 a1)
+{
+  float* pOrigAspectRatio = reinterpret_cast<float*>(a1 + 0x2E4);
+
+  if (g_mainHandle->GetCameraManager()->IsCameraEnabled() &&
+    g_mainHandle->GetCameraManager()->OverrideRatio())
+  {
+    *pOrigAspectRatio = g_mainHandle->GetCameraManager()->GetAspectRatio();
+  }
+
+  return oAspectRatioHook(a1);
+}
+
 //////////////////////////
 ////   INPUT HOOKS    ////
 //////////////////////////
 
 tGetXinputState oGetXinputState = nullptr;
-tSetCursor oSetCursor = nullptr;
 tSetCursorPos oSetCursorPos = nullptr;
-tShowCursor oShowCursor = nullptr;
 
 __int64 __fastcall hGetXinputState(int a1, __int64 a2)
 {
@@ -99,17 +110,6 @@ __int64 __fastcall hGetXinputState(int a1, __int64 a2)
     return oGetXinputState(a1, a2);
 }
 
-HCURSOR WINAPI hSetCursor(HCURSOR cursor)
-{
-  if (cursor == NULL)
-  {
-    if (g_mainHandle->GetUI()->IsEnabled())
-      return oSetCursor(g_mainHandle->GetUI()->GetCursor());
-  }
-
-  return oSetCursor(cursor);
-}
-
 BOOL WINAPI hSetCursorPos(int x, int y)
 {
   if (g_mainHandle->GetUI()->IsEnabled())
@@ -118,31 +118,26 @@ BOOL WINAPI hSetCursorPos(int x, int y)
   return oSetCursorPos(x, y);
 }
 
-int WINAPI hShowCursor(BOOL show)
-{
-  if (g_mainHandle->GetUI()->IsEnabled())
-    return oShowCursor(TRUE);
-
-  return oShowCursor(show);
-}
-
 //////////////////////////
 ////   OTHER HOOKS    ////
 //////////////////////////
 
 tUpdateTime oUpdateTime = nullptr;
 
-void __fastcall hUpdateTime(__int64 a1, __int64 a2)
+__int64 __fastcall hUpdateTime(double a1)
 {
   if (g_mainHandle->GetCameraManager()->IsTimeFrozen())
   {
-    Northlight::rl::Time::Singleton()->m_WorldTimeScale = 0;
-    Northlight::rl::Time::Singleton()->m_EffectTimeScale = 0;
+    BYTE* pTimeFreeze = (BYTE*)((__int64)g_gameHandle + 0x116F5B2);
+    *pTimeFreeze = 1;
+    Northlight::r::Time::Singleton()->m_EffectTimeScale = 0;
+    Northlight::r::Time::Singleton()->m_WorldTimeScale = 0;
+    Northlight::r::Time::Singleton()->m_UnkTimeScale1 = 0;
+    Northlight::r::Time::Singleton()->m_UnkTimeScale2 = 0;
   }
 
-  return oUpdateTime(a1, a2);
+  return oUpdateTime(a1);
 }
-
 
 /*----------------------------------------------------------------*/
 
@@ -217,25 +212,19 @@ void util::hooks::Init()
   __int64 CameraUpdate = (__int64)g_gameHandle + 0x3A1FC0;
   __int64 SetFov = (__int64)GetProcAddress(g_rlModule, "?setFov@PerspectiveView@m@@QEAAXM@Z");
   __int64 GetXinputState = (__int64)GetProcAddress(g_rlModule, "?rmdXInputGetState@@YAKKPEAU_rmd_XINPUT_STATE@@@Z");
-  __int64 TimeUpdate = (__int64)GetProcAddress(g_rlModule, "?write@CachedFile@r@@UEAAXPEBX_K@Z");
-
+  __int64 TimeUpdate = (__int64)g_gameHandle + 0x3579B0;
+  __int64 AspectRatioHook = (__int64)g_rlModule + 0xA4D20;
 
   CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
   CreateHook("CameraUpdate", CameraUpdate, hCameraUpdate, &oCameraUpdate);
   CreateHook("CameraFoV", SetFov, hSetFov, &oSetFov);
   CreateHook("GetXinputState", GetXinputState, hGetXinputState, &oGetXinputState);
+  CreateHook("AspectRatioHook", AspectRatioHook, hAspectRatioHook, &oAspectRatioHook);
   CreateHook("TimeUpdate", TimeUpdate, hUpdateTime, &oUpdateTime);
 
   HMODULE hUser32 = GetModuleHandleA("user32.dll");
-
-  FARPROC pSetCursor = GetProcAddress(hUser32, "SetCursor");
-  CreateHook("SetCursor", (__int64)pSetCursor, hSetCursor, &oSetCursor);
-
   FARPROC pSetCursorPos = GetProcAddress(hUser32, "SetCursorPos");
   CreateHook("SetCursorPos", (__int64)pSetCursorPos, hSetCursorPos, &oSetCursorPos);
-
-  FARPROC pShowCursor = GetProcAddress(hUser32, "ShowCursor");
-  CreateHook("ShowCursor", (__int64)pShowCursor, hShowCursor, &oShowCursor);
 
   util::log::Ok("Hooks initialized");
 }

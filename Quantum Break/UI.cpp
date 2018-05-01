@@ -3,6 +3,7 @@
 #include "Util/Util.h"
 #include "Util/ImGuiEXT.h"
 #include "imgui/imgui_impl_dx11.h"
+#include "Northlight.h"
 #include "resource.h"
 
 #include <WICTextureLoader.h>
@@ -32,8 +33,6 @@ UI::~UI()
 
 bool UI::Initialize()
 {
-  m_hCursor = LoadCursor(NULL, IDC_ARROW);
-
   /////////////////////////
   // ImGui Configuration //
   /////////////////////////
@@ -69,6 +68,7 @@ bool UI::Initialize()
 
   ImGuiIO& io = ImGui::GetIO();
   io.Fonts->AddFontDefault();
+  io.MouseDrawCursor = true;
 
   ImFontConfig fontConfig;
   fontConfig.OversampleH = 8;
@@ -161,7 +161,7 @@ void UI::Draw()
       m_SelectedMenu = UIMenu_Camera;
 
     ImGui::SameLine(0, 20);
-    if (ImGui::ToggleButton("ENVIRONMENT", ImVec2(158, 33), m_SelectedMenu == UIMenu_Visuals, false))
+    if (ImGui::ToggleButton("VISUALS", ImVec2(158, 33), m_SelectedMenu == UIMenu_Visuals, false))
       m_SelectedMenu = UIMenu_Visuals;
 
     ImGui::SameLine(0, 20);
@@ -177,7 +177,6 @@ void UI::Draw()
     ImGui::Dummy(ImVec2(0, 50));
     ImGui::Dummy(ImVec2(0, 0));
     ImGui::SameLine(10);
-
     {
       ImGui::BeginChild("contentChild", ImVec2(-10, -10), false);
 
@@ -185,6 +184,35 @@ void UI::Draw()
         g_mainHandle->GetCameraManager()->DrawUI();
       else if (m_SelectedMenu == UIMenu_Visuals)
       {
+        ImGui::PushFont(io.Fonts->Fonts[4]);
+        ImGui::Dummy(ImVec2(0, 10));
+        ImGui::Columns(4, "VisualColumns", false);
+        ImGui::NextColumn();
+        ImGui::SetColumnOffset(-1, 12);
+
+        ImGui::PushItemWidth(200);
+
+        bool DoFChanged = false;
+        bool* pOverrideDof = (bool*)((__int64)g_gameHandle + 0x116AEC8);
+        ImGui::Text("F-Stop");
+        ImGui::InputFloat("##FStop", (float*)((__int64)g_gameHandle + 0x116B048), 0.1, 0, 2);
+        ImGui::Text("Focal Distance");
+        ImGui::InputFloat("##FocalDistance", (float*)((__int64)g_gameHandle + 0x116B118), 0.1, 0, 2);
+        ImGui::Checkbox("Override DoF", pOverrideDof);
+
+        ImGui::NextColumn();
+        ImGui::SetColumnOffset(-1, 290);
+        ImGui::PushItemWidth(200);
+
+        ImGui::Text("Hello world");
+
+        ImGui::NextColumn();
+        ImGui::SetColumnOffset(-1, 552);
+        ImGui::PushItemWidth(200);
+
+        ImGui::Text("Hello world");
+
+        ImGui::PopFont();
       }
       else if (m_SelectedMenu == UIMenu_Misc)
       {
@@ -192,6 +220,7 @@ void UI::Draw()
         ImGui::NextColumn();
         ImGui::SetColumnOffset(-1, 5);
 
+        ImGui::Dummy(ImVec2(10, 10));
         ImGui::PushFont(io.Fonts->Fonts[4]);
         ImGui::PushItemWidth(130);
 
@@ -216,6 +245,8 @@ void UI::Draw()
     }
 
   } ImGui::End();
+
+  g_mainHandle->GetInputSystem()->DrawUI();
 
   ImGui::Render();
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

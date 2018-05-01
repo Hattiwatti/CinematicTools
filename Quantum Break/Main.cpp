@@ -109,6 +109,8 @@ bool Main::Initialize()
   return true;
 }
 
+Northlight::rend::Spotlight* pSpotlight = nullptr;
+
 void Main::Run()
 {
   // Main update loop
@@ -193,12 +195,25 @@ LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
     if (g_mainHandle->m_pInputSystem->HandleKeyMsg(wParam, lParam))
       return TRUE;
     break;
-  case WM_MOUSEMOVE:
-    g_mainHandle->m_pInputSystem->HandleMouseMsg(lParam);
+  case WM_MOUSEMOVE: case WM_MOUSEWHEEL:
+    if (g_mainHandle->m_pUI->IsEnabled())
+      return TRUE;
+    break;
+  case WM_INPUT:
+    g_mainHandle->m_pInputSystem->HandleRawInput(lParam);
+    if ((g_mainHandle->m_pCameraManager->IsCameraEnabled() &&
+      g_mainHandle->m_pCameraManager->IsKbmDisabled() && 
+      !Northlight::r::IsPaused()) ||
+      g_mainHandle->m_pUI->IsEnabled())
+      return TRUE;
     break;
   case WM_SIZE:
     // Resize event
     g_mainHandle->m_pUI->OnResize();
+    break;
+  case WM_EXITSIZEMOVE:
+    util::log::Write("WM_EXITSIZEMOVE");
+    Northlight::rend::UpdateResolution();
     break;
   case WM_DESTROY:
     g_shutdown = true;
