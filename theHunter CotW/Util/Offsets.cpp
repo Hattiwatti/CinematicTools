@@ -16,16 +16,16 @@ namespace
   // Fill with hardcoded offsets if you don't want to use scanning
   // These should be relative to the module base.
   std::unordered_map<std::string, __int64> m_HardcodedOffsets = map_list_of
-  ("OFFSET_CLOCK", 0x1E08370)
-  ("OFFSET_ENVIRONMENTGFX", 0x1E08368)
-  ("OFFSET_GRAPHICSENGINE", 0x1D7DAE0)
-  ("OFFSET_UIMANAGER", 0x1D7DAF0)
-  ("OFFSET_WORLDTIME", 0x1E2E430)
-  ("OFFSET_TIMESCALE", 0x1C9B634)
+  ("OFFSET_CLOCK", 0x1E32668)
+  ("OFFSET_ENVIRONMENTGFX", 0x1E32660)
+  ("OFFSET_GRAPHICSENGINE", 0x1DA7DE0)
+  ("OFFSET_UIMANAGER", 0x1DA7DF0)
+  ("OFFSET_WORLDTIME", 0x1E58720)
+  ("OFFSET_TIMESCALE", 0x1CC4654)
     
-  ("OFFSET_CAMERAUPDATE", 0x2FECB0)
-  ("OFFSET_CAMERAUPDATE2", 0x2F6C40)
-  ("OFFSET_INPUTUPDATE", 0x36D5B0);
+  ("OFFSET_CAMERAUPDATE", 0x3016E0)
+  ("OFFSET_CAMERAUPDATE2", 0x2F7E70)
+  ("OFFSET_INPUTUPDATE", 0x3703D0);
 
   bool DataCompare(BYTE* pData, BYTE* bSig, const char* szMask)
   {
@@ -72,7 +72,8 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
   Pattern = new BYTE[sig.size()]();
   AddOffset = offset;
 
-  for (int i = 0; i < sig.size(); ++i)
+  unsigned int patternOffset = 0;
+  for (unsigned int i = 0; i < sig.size(); ++i)
   {
     switch (sig[i])
     {
@@ -83,12 +84,12 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
       case '[':
       {
         HasReference = true;
-        ReferenceOffset = i;
+        ReferenceOffset = patternOffset;
         break;
       }
       case ']':
       {
-        ReferenceSize = i - ReferenceOffset;
+        ReferenceSize = patternOffset - ReferenceOffset;
         break;
       }
       case '?':
@@ -96,16 +97,55 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
         Mask += '?';
         // In signature it's clearer to mark one wildcard byte as ??
         // so skip the next character.
+        patternOffset += 1;
         i += 1;
+        break;
       }
       default:
       {
         Mask += 'x';
         // Process 2 characters into a single byte
-        Pattern[i] = (util::CharToByte(sig[i]) << 4) + util::CharToByte(sig[i+1]);
+        Pattern[patternOffset] = (util::CharToByte(sig[i]) << 4) + util::CharToByte(sig[i+1]);
+        patternOffset += 1;
         i += 1;
       }
     }
+  }
+}
+
+bool util::offsets::CheckVersion(const char* supportedVersion)
+{
+  Signature versionSignature("41 B8 ?? ?? ?? ?? 48 8D 15 [ ?? ?? ?? ?? ] 48 81 C1");
+  std::string sVersion = "Version could not be retrieved";
+
+  MODULEINFO info;
+  GetModuleInformation(GetCurrentProcess(), g_gameHandle, &info, sizeof(MODULEINFO));
+
+  __int64 result = (__int64)FindPattern((BYTE*)info.lpBaseOfDll, info.SizeOfImage, versionSignature.Pattern, versionSignature.Mask.c_str());
+  if (result)
+  {
+    int* pReference = (int*)(result + versionSignature.ReferenceOffset);
+    // Assembly reference is relative to the address after the reference
+    versionSignature.Result = ((__int64)pReference + versionSignature.ReferenceSize) + *pReference;
+
+    char* version = (char*)versionSignature.Result;
+    sVersion = std::string(version);
+  }
+
+  if (sVersion == supportedVersion)
+  {
+    util::log::Ok("Current Code Version: %s", sVersion.c_str());
+    util::log::Ok("Supported Code Version: %s", supportedVersion);
+    util::log::Ok("Game versions match. Continuing..\n");
+    return true;
+  }
+  else
+  {
+    util::log::Warning("!! VERSION MISMATCH !!");
+    util::log::Warning("Current Code Version: %s", sVersion.c_str());
+    util::log::Warning("Supported Code Version: %s", supportedVersion);
+    util::log::Warning("Some features may not work until next tool update.");
+    return false;
   }
 }
 
@@ -122,7 +162,15 @@ void util::offsets::Scan()
   // The last argument is the offset to be added to the result, useful when
   // you need a code offset for byte patches.
 
-  m_Signatures.emplace("OFFSET_EXAMPLE", Signature("12 34 56 78 [ ?? ?? ?? ?? ] AA BB ?? DF", 0x20));
+  m_Signatures.emplace("OFFSET_CLOCK", Signature("72 BB 48 8B 0D [ ?? ?? ?? ?? ]"));
+  m_Signatures.emplace("OFFSET_ENVIRONMENTGFX", Signature("48 89 73 60 48 8B 0D [ ?? ?? ?? ?? ]"));
+  m_Signatures.emplace("OFFSET_GRAPHICSENGINE", Signature("EB 36 48 8B 0D [ ?? ?? ?? ?? ]"));
+  m_Signatures.emplace("OFFSET_UIMANAGER", Signature("48 8B 0D [ ?? ?? ?? ?? ] E8 ?? ?? ?? ?? 84 C0 74 0C 48 8B 0D"));
+  m_Signatures.emplace("OFFSET_WORLDTIME", Signature("74 21 48 8B 05 [ ?? ?? ?? ?? ] 48 85 C0"));
+  m_Signatures.emplace("OFFSET_TIMESCALE", Signature("F3 0F 59 6F ?? F3 44 0F 59 0D [ ?? ?? ?? ?? ]"));
+  m_Signatures.emplace("OFFSET_CAMERAUPDATE", Signature("F3 0F 10 4E ?? 48 8B CF E8 [ ?? ?? ?? ?? ] EB 0B"));
+  //m_Signatures.emplace("OFFSET_CAMERAUPDATE2", Signature("F3 0F 10 4E ?? 48 8B CF E8 [ ?? ?? ?? ?? ] EB 0B", 0x1200));
+  m_Signatures.emplace("OFFSET_INPUTUPDATE", Signature("E8 [ ?? ?? ?? ?? ] 48 8B 0D ?? ?? ?? ?? 48 85 C9 74 0A F3 0F 10 4B"));
 
   util::log::Write("Scanning for offsets...");
 
@@ -144,6 +192,7 @@ void util::offsets::Scan()
     {
       util::log::Error("Could not find pattern for %s", entry.first.c_str());
       allFound = false;
+      continue;
     }
 
     if (sig.HasReference)
@@ -156,12 +205,19 @@ void util::offsets::Scan()
     }
     else
       sig.Result = result + sig.AddOffset;
+
+    sig.Result = sig.Result - (__int64)g_gameHandle;
   }
 
   if (allFound)
     util::log::Ok("All offsets found");
   else
     util::log::Warning("All offsets could not be found, this might result in a crash");
+
+  std::fstream file;
+  file.open("./Cinematic Tools/Offsets.log", std::fstream::in | std::fstream::out | std::fstream::trunc);
+  for (auto& sig : m_Signatures)
+    file << "(\"" + sig.first + "\", \t\t0x" << std::hex << std::uppercase << sig.second.Result << " )\n";
 
   m_UseScannedResults = true;
 }
@@ -178,7 +234,7 @@ __int64 util::offsets::GetOffset(std::string const& name)
     if (result != m_Signatures.end())
     {
       if (result->second.Result)
-        return result->second.Result;
+        return result->second.Result + (__int64)g_gameHandle;
     }
   }
 

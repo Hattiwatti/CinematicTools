@@ -10,6 +10,8 @@ static const char* g_moduleName = "theHunterCotW_F.exe";
 static const char* g_className = "thcotw";
 static const char* g_configFile = "./Cinematic Tools/config.ini";
 
+static const char* g_supportedVersion = "Jun 13 2018";
+
 Main* g_mainHandle = nullptr;
 HINSTANCE g_dllHandle = NULL;
 HINSTANCE g_gameHandle = NULL;
@@ -59,13 +61,10 @@ bool Main::Initialize()
     return false;
   }
 
-  // Subclass the window with a new WndProc to catch messages
-  g_origWndProc = (WNDPROC)SetWindowLongPtr(g_gameHwnd, -4, (LONG_PTR)&WndProc);
-  if (g_origWndProc == 0)
-  {
-    util::log::Error("Failed to set WndProc, GetLastError 0x%X", GetLastError());
-    return false;
-  }
+  // Retrieve game version and make a const variable for whatever version
+  // the tools support. If versions mismatch, scan for offsets.
+  if (!util::offsets::CheckVersion(g_supportedVersion))
+    util::offsets::Scan();
 
   g_d3d11Device = Apex::CGraphicsEngine::Singleton()->m_D3Objects->Device; // Fetch ID3D11Device
   g_dxgiSwapChain = Apex::CGraphicsEngine::Singleton()->m_D3Objects->SwapChain; // Fetch SwapChain
@@ -79,10 +78,6 @@ bool Main::Initialize()
     return false;
   }
 
-  // Retrieve game version and make a const variable for whatever version
-  // the tools support. If versions mismatch, scan for offsets.
-  // util::offsets::Scan();
-
   m_pCameraManager = std::make_unique<CameraManager>();
   m_pInputSystem = std::make_unique<InputSystem>();
   m_pUI = std::make_unique<UI>();
@@ -92,6 +87,14 @@ bool Main::Initialize()
     return false;
 
   util::hooks::Init();
+
+  // Subclass the window with a new WndProc to catch messages
+  g_origWndProc = (WNDPROC)SetWindowLongPtr(g_gameHwnd, -4, (LONG_PTR)&WndProc);
+  if (g_origWndProc == 0)
+  {
+    util::log::Error("Failed to set WndProc, GetLastError 0x%X", GetLastError());
+    return false;
+  }
 
   LoadConfig();
   return true;

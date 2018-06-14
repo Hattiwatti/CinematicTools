@@ -52,11 +52,12 @@ namespace util
       int ReferenceSize{ 0 }; // How many bytes is the assembly reference (usually 4, obsolete?)
       int AddOffset{ 0 }; // How much bytes should be added to the final result
 
-      __int64 Result;
+      __int64 Result{ 0 };
 
       Signature(std::string const& sig, int offset = 0);
     };
 
+    bool CheckVersion(const char* supportedVersion);
     void Scan();
     __int64 GetOffset(std::string const& name);
   }
