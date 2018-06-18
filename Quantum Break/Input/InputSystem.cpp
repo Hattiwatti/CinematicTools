@@ -60,16 +60,8 @@ void InputSystem::HandleMouseMsg(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (uMsg)
   {
-  case WM_MOUSEMOVE:
-    RECT windowRect;
-    if (!GetClientRect(g_gameHwnd, &windowRect))
-      return;
-
-    m_MouseState.x = (lParam & 0xFFFF) - (windowRect.right - windowRect.left) / 2;
-    m_MouseState.y = (lParam >> 16) - (windowRect.bottom - windowRect.top) / 2;
-    break;
   case WM_MOUSEWHEEL:
-    m_MouseState.z = GET_WHEEL_DELTA_WPARAM(wParam);
+    m_MouseState.z += GET_WHEEL_DELTA_WPARAM(wParam);
     break;
   }
 }
@@ -88,7 +80,6 @@ void InputSystem::HandleRawInput(LPARAM lParam)
   {
     m_MouseState.x += raw->data.mouse.lLastX;
     m_MouseState.y += raw->data.mouse.lLastY;
-    m_MouseState.z += raw->data.mouse.usButtonData;
   }
 }
 

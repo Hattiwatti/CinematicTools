@@ -184,4 +184,4 @@ static const std::map<Action, GamepadKey> DefaultGamepadMap = boost::assign::map
 (Camera_DecFov, GamepadKey::RightThumb)
 (Track_CreateNode, GamepadKey::None)
 (Track_DeleteNode, GamepadKey::None)
-(Track_Play, GamepadKey::None);;
+(Track_Play, GamepadKey::None);

@@ -197,6 +197,7 @@ void UI::Draw()
         ImGui::Text("F-Stop");
         ImGui::InputFloat("##FStop", (float*)((__int64)g_gameHandle + 0x116B048), 0.1, 0, 2);
         ImGui::Text("Focal Distance");
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
         ImGui::InputFloat("##FocalDistance", (float*)((__int64)g_gameHandle + 0x116B118), 0.1, 0, 2);
         ImGui::Checkbox("Override DoF", pOverrideDof);
 
@@ -204,14 +205,29 @@ void UI::Draw()
         ImGui::SetColumnOffset(-1, 290);
         ImGui::PushItemWidth(200);
 
-        ImGui::Text("Hello world");
+        bool* pRenderVelocityPass = (bool*)((__int64)g_rendererModule + 0x4848AB);
+        bool* pRenderSSSBlur = (bool*)((__int64)g_rendererModule + 0x47488B);
+        bool* pRenderVectorBlur = (bool*)((__int64)g_rendererModule + 0x47488C);
+        bool* pFilmGrain = (bool*)((__int64)g_rendererModule + 0x4748A4);
+
+        ImGui::Checkbox("Velocity Pass", pRenderVelocityPass);
+        ImGui::Checkbox("SSS Blur", pRenderSSSBlur);
+        ImGui::Checkbox("Vector Blur", pRenderVectorBlur);
+        ImGui::Checkbox("Film Grain", pFilmGrain);
 
         ImGui::NextColumn();
         ImGui::SetColumnOffset(-1, 552);
         ImGui::PushItemWidth(200);
 
-        ImGui::Text("Hello world");
+        bool* pDrawHLODs = (bool*)((__int64)g_rendererModule + 0x4A00EE);
+        bool* pUseMeshLODs = (bool*)((__int64)g_rendererModule + 0x4748A8);
+        bool* pCinematicMode = (bool*)((__int64)g_rendererModule + 0x4A011E);
 
+        ImGui::Checkbox("Draw HLODs", pDrawHLODs);
+        ImGui::Checkbox("Use Mesh LODs", pUseMeshLODs);
+        ImGui::Checkbox("Cinematic Mode", pCinematicMode);
+
+        ImGui::PopStyleVar();
         ImGui::PopFont();
       }
       else if (m_SelectedMenu == UIMenu_Misc)

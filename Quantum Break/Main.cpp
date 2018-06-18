@@ -188,25 +188,42 @@ LRESULT CALLBACK Main::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
   switch (uMsg)
   {
   case WM_ACTIVATE:
+  {
     // Focus event
     g_hasFocus = (wParam != WA_INACTIVE);
     break;
+  }
   case WM_KEYDOWN:
+  {
     if (g_mainHandle->m_pInputSystem->HandleKeyMsg(wParam, lParam))
       return TRUE;
+
     break;
+  }
   case WM_MOUSEMOVE: case WM_MOUSEWHEEL:
+  {
+    g_mainHandle->m_pInputSystem->HandleMouseMsg(uMsg, wParam, lParam);
+
     if (g_mainHandle->m_pUI->IsEnabled())
       return TRUE;
+
     break;
+  }
   case WM_INPUT:
-    g_mainHandle->m_pInputSystem->HandleRawInput(lParam);
-    if ((g_mainHandle->m_pCameraManager->IsCameraEnabled() &&
-      g_mainHandle->m_pCameraManager->IsKbmDisabled() && 
-      !Northlight::r::IsPaused()) ||
-      g_mainHandle->m_pUI->IsEnabled())
+  {
+    // To prevent UI toggle from rotating the camera
+    if (!g_mainHandle->m_pUI->IsEnabled())
+      g_mainHandle->m_pInputSystem->HandleRawInput(lParam);
+
+    if ((g_mainHandle->m_pCameraManager->IsCameraEnabled()
+          && g_mainHandle->m_pCameraManager->IsKbmDisabled()
+          && !Northlight::r::IsPaused())
+      || g_mainHandle->m_pUI->IsEnabled())
+    {
       return TRUE;
+    }
     break;
+  }
   case WM_SIZE:
     // Resize event
     g_mainHandle->m_pUI->OnResize();
