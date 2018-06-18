@@ -308,10 +308,7 @@ LRESULT __stdcall UIManager::GetMessage_Callback(int nCode, WPARAM wParam, LPARA
 
     if (!ImGui_ImplWin32_WndProcHandler(pMsg->hwnd, pMsg->message, pMsg->wParam, pMsg->lParam))
     {
-      if (pMsg->message == WM_MOUSEMOVE)
-      {
-       // util::log::Write("%d\t%d", (signed short)pMsg->lParam, (signed short)(pMsg->lParam >> 16));
-      }
+
     }
   }
   
