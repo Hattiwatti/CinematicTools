@@ -63,7 +63,8 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
   Pattern = new BYTE[sig.size()]();
   AddOffset = offset;
 
-  for (size_t i = 0; i < sig.size(); ++i)
+  unsigned int patternOffset = 0;
+  for (unsigned int i = 0; i < sig.size(); ++i)
   {
     switch (sig[i])
     {
@@ -74,12 +75,12 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
       case '[':
       {
         HasReference = true;
-        ReferenceOffset = i;
+        ReferenceOffset = patternOffset;
         break;
       }
       case ']':
       {
-        ReferenceSize = i - ReferenceOffset;
+        ReferenceSize = patternOffset - ReferenceOffset;
         break;
       }
       case '?':
@@ -87,13 +88,16 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
         Mask += '?';
         // In signature it's clearer to mark one wildcard byte as ??
         // so skip the next character.
+        patternOffset += 1;
         i += 1;
+        break;
       }
       default:
       {
         Mask += 'x';
         // Process 2 characters into a single byte
-        Pattern[i] = (util::CharToByte(sig[i]) << 4) + util::CharToByte(sig[i+1]);
+        Pattern[patternOffset] = (util::CharToByte(sig[i]) << 4) + util::CharToByte(sig[i+1]);
+        patternOffset += 1;
         i += 1;
       }
     }
