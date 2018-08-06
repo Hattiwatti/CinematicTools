@@ -10,7 +10,7 @@ static const char* g_moduleName = "theHunterCotW_F.exe";
 static const char* g_className = "thcotw";
 static const char* g_configFile = "./Cinematic Tools/config.ini";
 
-static const char* g_supportedVersion = "Jun 13 2018";
+static const char* g_supportedVersion = "Jun 19 2018";
 
 Main* g_mainHandle = nullptr;
 HINSTANCE g_dllHandle = NULL;

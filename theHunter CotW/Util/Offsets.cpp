@@ -16,16 +16,14 @@ namespace
   // Fill with hardcoded offsets if you don't want to use scanning
   // These should be relative to the module base.
   std::unordered_map<std::string, __int64> m_HardcodedOffsets = map_list_of
-  ("OFFSET_CLOCK", 0x1E32668)
-  ("OFFSET_ENVIRONMENTGFX", 0x1E32660)
-  ("OFFSET_GRAPHICSENGINE", 0x1DA7DE0)
-  ("OFFSET_UIMANAGER", 0x1DA7DF0)
-  ("OFFSET_WORLDTIME", 0x1E58720)
-  ("OFFSET_TIMESCALE", 0x1CC4654)
-    
-  ("OFFSET_CAMERAUPDATE", 0x3016E0)
-  ("OFFSET_CAMERAUPDATE2", 0x2F7E70)
-  ("OFFSET_INPUTUPDATE", 0x3703D0);
+  ("OFFSET_ENVIRONMENTGFX", 0x1E33660)
+  ("OFFSET_CLOCK", 0x1E33668)
+  ("OFFSET_GRAPHICSENGINE", 0x1DA8DE0)
+  ("OFFSET_INPUTUPDATE", 0x3700F0)
+  ("OFFSET_TIMESCALE", 0x1CC5654)
+  ("OFFSET_WORLDTIME", 0x1E59710)
+  ("OFFSET_UIMANAGER", 0x1DA8DF0)
+  ("OFFSET_CAMERAUPDATE", 0x300F20);
 
   bool DataCompare(BYTE* pData, BYTE* bSig, const char* szMask)
   {
@@ -164,7 +162,7 @@ void util::offsets::Scan()
 
   m_Signatures.emplace("OFFSET_CLOCK", Signature("72 BB 48 8B 0D [ ?? ?? ?? ?? ]"));
   m_Signatures.emplace("OFFSET_ENVIRONMENTGFX", Signature("48 89 73 60 48 8B 0D [ ?? ?? ?? ?? ]"));
-  m_Signatures.emplace("OFFSET_GRAPHICSENGINE", Signature("EB 36 48 8B 0D [ ?? ?? ?? ?? ]"));
+  m_Signatures.emplace("OFFSET_GRAPHICSENGINE", Signature("48 8B 0D [ ?? ?? ?? ?? ] 0F B6 05"));
   m_Signatures.emplace("OFFSET_UIMANAGER", Signature("48 8B 0D [ ?? ?? ?? ?? ] E8 ?? ?? ?? ?? 84 C0 74 0C 48 8B 0D"));
   m_Signatures.emplace("OFFSET_WORLDTIME", Signature("74 21 48 8B 05 [ ?? ?? ?? ?? ] 48 85 C0"));
   m_Signatures.emplace("OFFSET_TIMESCALE", Signature("F3 0F 59 6F ?? F3 44 0F 59 0D [ ?? ?? ?? ?? ]"));
