@@ -280,7 +280,7 @@ void InputSystem::ActionUpdate()
           for (int i = 0; i < GamepadKey::GamepadKey_Count; ++i)
           {
             float keyState = m_GamepadKeyStates[i];
-            if (keyState != 0)
+            if (keyState > 0.5f)
             {
               m_CaptureState.CaptureGamepad = false;
               m_GamepadBindings[m_CaptureState.ActionIndex] = static_cast<GamepadKey>(i);
