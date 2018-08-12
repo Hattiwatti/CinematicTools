@@ -46,15 +46,20 @@ public:
   void HandleMouseMsg(LPARAM lParam);
   bool HandleKeyMsg(WPARAM wParam, LPARAM lParam);
 
+  void Update();
+
   void ShowUI();
   void DrawUI();
 
   bool IsActionDown(Action action);
+  bool WentDown(Action action);
   float GetActionState(Action action);
   DirectX::XMFLOAT3 GetMouseState();
 
   void ReadConfig(INIReader* pReader);
   const std::string GetConfig();
+
+  void RegisterHotkeyCallback(std::function<void(InputSystem const&)> func);
 
 private:
   void ActionUpdate();
@@ -81,6 +86,7 @@ private:
   std::array<std::string, Action::ActionCount>      m_KeyboardKeyNames;
 
   std::array<float, Action::ActionCount>            m_WantedActionStates;
+  std::array<float, Action::ActionCount>            m_PreviousActionStates;
   std::array<float, Action::ActionCount>            m_SmoothActionStates;
   std::array<float, GamepadKey::GamepadKey_Count>   m_GamepadKeyStates;
 
@@ -93,6 +99,8 @@ private:
   std::thread m_ActionThread;
   std::thread m_ControllerThread;
   std::thread m_HotkeyThread;
+
+  boost::chrono::high_resolution_clock::time_point m_LastUpdate;
 
 public:
   InputSystem(InputSystem const&) = delete;

@@ -26,19 +26,8 @@ void CameraManager::HotkeyUpdate()
 {
   InputSystem* pInput = g_mainHandle->GetInputSystem();
 
-  if (pInput->IsActionDown(Action::ToggleCamera))
-  {
+  if (pInput->WentDown(Action::ToggleCamera))
     ToggleCamera();
-    while (pInput->IsActionDown(Action::ToggleCamera))
-      Sleep(1);
-  }
-
-  if (pInput->IsActionDown(Action::ToggleHUD))
-  {
-
-    while (pInput->IsActionDown(Action::ToggleHUD))
-      Sleep(1);
-  }
 }
 
 void CameraManager::Update(double dt)

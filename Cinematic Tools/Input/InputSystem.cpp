@@ -15,6 +15,7 @@ static const float g_mouseSensitivity = 1.0f;
 
 InputSystem::InputSystem() :
   m_DInputInterface(NULL),
+  m_PreviousActionStates(),
   m_WantedActionStates(),
   m_SmoothActionStates(),
   m_GamepadKeyStates(),
@@ -28,9 +29,7 @@ InputSystem::InputSystem() :
 InputSystem::~InputSystem()
 {
   // Wait for threads to exit before destructing
-  m_ActionThread.join();
   m_ControllerThread.join();
-  m_HotkeyThread.join();
 }
 
 void InputSystem::Initialize()
@@ -55,14 +54,38 @@ void InputSystem::Initialize()
     }
   }
 
-  m_ActionThread = std::thread(&InputSystem::ActionUpdate, this);
+  // Controller acquisition sometimes ends up blocking the thread,
+  // so that's why it runs in its own thread
   m_ControllerThread = std::thread(&InputSystem::ControllerUpdate, this);
-  m_HotkeyThread = std::thread(&InputSystem::HotkeyUpdate, this);
+}
+
+void InputSystem::Update()
+{
+  // First update action states
+  ActionUpdate();
+
+  // Then run through hotkey updates for each registered module
+  HotkeyUpdate();
 }
 
 void InputSystem::HandleMouseMsg(LPARAM lParam)
 {
-  // Not used
+  // Handle raw mouse messages
+
+  UINT dwSize = 0;
+  GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+
+  BYTE* lpb = new BYTE[dwSize];
+  GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER));
+
+  RAWINPUT* raw = (RAWINPUT*)lpb;
+  if (raw->header.dwType == RIM_TYPEMOUSE)
+  {
+    m_MouseState.x += raw->data.mouse.lLastX;
+    m_MouseState.y += raw->data.mouse.lLastY;
+  }
+
+  delete[] lpb;
 }
 
 bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)
@@ -182,6 +205,11 @@ bool InputSystem::IsActionDown(Action action)
   return m_WantedActionStates[action] != 0.f;
 }
 
+bool InputSystem::WentDown(Action action)
+{
+  return m_PreviousActionStates[action] == 0.f && m_WantedActionStates[action] != 0.f;
+}
+
 float InputSystem::GetActionState(Action action)
 {
   return m_SmoothActionStates[action];
@@ -251,100 +279,94 @@ const std::string InputSystem::GetConfig()
 
 void InputSystem::ActionUpdate()
 {
-  // Action Update thread
   // Processes keyboard + gamepad input and updates
   // action states based on bindings.
 
-  auto lastUpdate = boost::chrono::high_resolution_clock::now();
+  boost::chrono::duration<double> dt = boost::chrono::high_resolution_clock::now() - m_LastUpdate;
+  m_LastUpdate = boost::chrono::high_resolution_clock::now();
 
-  while (!g_shutdown)
+  std::array<float, Action::ActionCount> newWantedStates{ 0 };
+  m_GamepadKeyStates.fill(0.f);
+
+  if (g_hasFocus)
   {
-    boost::chrono::duration<double> dt = boost::chrono::high_resolution_clock::now() - lastUpdate;
-    lastUpdate = boost::chrono::high_resolution_clock::now();
-
-    std::array<float, Action::ActionCount> newWantedStates{ 0 };
-    m_GamepadKeyStates.fill(0.f);
-
-    if (g_hasFocus)
+    if (m_Gamepad.IsPresent)
     {
+      if (m_Gamepad.Type == GamepadType::XInput)
+        UpdateXInput();
+      else
+        UpdateDInput();
 
-      if (m_Gamepad.IsPresent)
+      if (m_CaptureState.CaptureGamepad)
       {
-        if (m_Gamepad.Type == GamepadType::XInput)
-          UpdateXInput();
-        else
-          UpdateDInput();
-
-        if (m_CaptureState.CaptureGamepad)
+        for (int i = 0; i < GamepadKey::GamepadKey_Count; ++i)
         {
-          for (int i = 0; i < GamepadKey::GamepadKey_Count; ++i)
+          float keyState = m_GamepadKeyStates[i];
+          if (keyState > 0.5f)
           {
-            float keyState = m_GamepadKeyStates[i];
-            if (keyState > 0.5f)
-            {
-              m_CaptureState.CaptureGamepad = false;
-              m_GamepadBindings[m_CaptureState.ActionIndex] = static_cast<GamepadKey>(i);
-              g_mainHandle->OnConfigChanged();
-            }
-          }
-        }
-
-        if (g_mainHandle->GetCameraManager()->IsGamepadDisabled())
-        {
-          for (int i = 0; i < Action::ActionCount; ++i)
-          {
-            GamepadKey key = m_GamepadBindings[i];
-            newWantedStates[i] += m_GamepadKeyStates[key];
+            m_CaptureState.CaptureGamepad = false;
+            m_GamepadBindings[m_CaptureState.ActionIndex] = static_cast<GamepadKey>(i);
+            g_mainHandle->OnConfigChanged();
           }
         }
       }
 
-      if (!g_mainHandle->GetUI()->HasKeyboardFocus())
+      if (g_mainHandle->GetCameraManager()->IsGamepadDisabled())
       {
         for (int i = 0; i < Action::ActionCount; ++i)
         {
-          int key = m_KeyboardBindings[i];
+          GamepadKey key = m_GamepadBindings[i];
+          newWantedStates[i] += m_GamepadKeyStates[key];
+        }
+      }
+    }
 
-          //if (!g_mainHandle->GetCameraManager()->IsKbmDisabled() &&
-          //  i >= Camera_Forward && i <= Camera_Down)
-          //  key = pInputMgr->m_keyboardMap[i + 14];
+    if (!g_mainHandle->GetUI()->HasKeyboardFocus())
+    {
+      for (int i = 0; i < Action::ActionCount; ++i)
+      {
+        int key = m_KeyboardBindings[i];
 
-          if (key >> 8)
-          {
-            if (GetKeyState(key >> 8) & 0x8000 && GetKeyState(key & 0xFF) & 0x8000)
-              newWantedStates[i] += 1.0f;
-          }
-          else if (GetKeyState(key) & 0x8000)
+        //if (!g_mainHandle->GetCameraManager()->IsKbmDisabled() &&
+        //  i >= Camera_Forward && i <= Camera_Down)
+        //  key = pInputMgr->m_keyboardMap[i + 14];
+
+        if (key >> 8)
+        {
+          if (GetKeyState(key >> 8) & 0x8000 && GetKeyState(key & 0xFF) & 0x8000)
             newWantedStates[i] += 1.0f;
         }
+        else if (GetKeyState(key) & 0x8000)
+          newWantedStates[i] += 1.0f;
       }
     }
+  }
 
-    // Copy new values and perform smoothing
-    m_WantedActionStates = newWantedStates;
-    for (int i = 0; i < Action::ActionCount; ++i)
+  // Save previous wanted values for up/down detection
+  m_PreviousActionStates = m_WantedActionStates;
+
+  // Copy new values and perform smoothing
+  m_WantedActionStates = newWantedStates;
+  for (int i = 0; i < Action::ActionCount; ++i)
+  {
+    float& currentState = m_SmoothActionStates[i];
+    float& wantedState = m_WantedActionStates[i];
+
+    if (currentState != wantedState)
     {
-      float& currentState = m_SmoothActionStates[i];
-      float& wantedState = m_WantedActionStates[i];
-
-      if (currentState != wantedState)
+      if (wantedState > 0)
       {
-        if (wantedState > 0)
-        {
-          currentState += dt.count() / g_actionClearTime;
-          if (currentState > wantedState)
-            currentState = wantedState;
-        }
-        else
-        {
-          currentState -= dt.count() / g_actionClearTime;
-          if (currentState < 0)
-            currentState = 0;
-        }
+        currentState += dt.count() / g_actionClearTime;
+        if (currentState > wantedState)
+          currentState = wantedState;
+      }
+      else
+      {
+        currentState -= dt.count() / g_actionClearTime;
+        if (currentState < 0)
+          currentState = 0;
       }
     }
-
-    Sleep(10);
   }
 }
 
@@ -397,26 +419,13 @@ void InputSystem::ControllerUpdate()
 
 void InputSystem::HotkeyUpdate()
 {
-  // Hotkey thread
-  // This is in its own thread so when you press and hold
-  // for example HUD Toggle, you can still move the camera
-  // and it doesn't block other updates until you lift the
-  // key up again.
-
-  while (!g_shutdown)
+  // Runs through registered hotkey callbacks
+  if (g_hasFocus)
   {
-    if (g_hasFocus)
-    {
-      if (IsActionDown(ToggleUI))
-      {
-        g_mainHandle->GetUI()->Toggle();
-        while (IsActionDown(ToggleUI))
-          Sleep(10);
-      }
+    if (WentDown(ToggleUI))
+      g_mainHandle->GetUI()->Toggle();
 
-      g_mainHandle->GetCameraManager()->HotkeyUpdate();
-    }
-    Sleep(10);
+    g_mainHandle->GetCameraManager()->HotkeyUpdate();
   }
 }
 
