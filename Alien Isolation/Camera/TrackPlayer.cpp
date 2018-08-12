@@ -319,9 +319,9 @@ void TrackPlayer::DrawUI()
     DeleteTrack();
   ImGui::Dummy(ImVec2(0, 5));
   ImGui::Dummy(ImVec2(0, 5));
-  ImGui::Text("Time multiplier");
+  ImGui::Text("Time between previous node");
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
-  ImGui::InputFloat("##CameraTrackSpeedMultiplier", &m_NodeTimeSpan, 0.1f, 0, 2);
+  ImGui::InputFloat("##CameraTrackNodeTime", &m_NodeTimeSpan, 0.1f, 0, 2);
 
   ImGui::Checkbox("Lock field of view", &m_LockFieldOfView);
   ImGui::Checkbox("Lock depth of field", &m_LockDepthOfField);
