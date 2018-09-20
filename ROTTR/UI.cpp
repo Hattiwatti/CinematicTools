@@ -187,12 +187,11 @@ void UI::Draw()
     ImGui::Dummy(ImVec2(0, 0));
     ImGui::SameLine(10);
 
+    ImGui::BeginChild("contentChild", ImVec2(-10, -10), false);
     {
-      ImGui::BeginChild("contentChild", ImVec2(-10, -10), false);
-
       if (m_SelectedMenu == SelectedMenu::Camera)
       {
-        //g_mainHandle->GetCameraManager()->DrawUI();
+        g_mainHandle->GetCameraManager()->DrawUI();
       }
       else if (m_SelectedMenu >= SelectedMenu::Visuals_Camera && m_SelectedMenu <= SelectedMenu::Visuals_DOF)
       {
@@ -236,12 +235,12 @@ void UI::Draw()
 
         ImGui::PopFont();
       }
-      ImGui::EndChild();
+      
     }
+    ImGui::EndChild();
 
   } ImGui::End();
 
-  //g_mainHandle->GetObjectInteractor()->DrawUI();
   g_mainHandle->GetInputSystem()->DrawUI();
 
   ImGui::Render();

@@ -90,7 +90,6 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
   // NodeTimeSpan modifies this. 
   float timeMultiplier = (1.f / m_NodeTimeSpan);
 
-  CatmullRomNode resultNode;
   // If manual play is enabled, time is multiplied
   // by input. IgnoreManual is for generating display buffers.
   if (!m_ManualPlay || ignoreManual)
@@ -107,8 +106,8 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
   bool goForward = false; // Time is increasing, should we move on to the next nodes?
   bool goBackward = false; // Time is decreasing, should we move on to the previous nodes?
 
-                           // Detect if we should move onto the next/previous node. If we're at the
-                           // start or the end, return those nodes.
+  // Detect if we should move onto the next/previous node. If we're at the
+  // start or the end, return those nodes.
   while ((goForward = m_CurrentTime >= nodes[m_CurrentNode + 1].TimeStamp) ||
     (goBackward = m_CurrentTime < nodes[m_CurrentNode].TimeStamp))
   {
@@ -154,6 +153,8 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
   XMVECTOR vPos2 = XMLoadFloat3(&n2->Position);
   XMVECTOR vPos3 = XMLoadFloat3(&n3->Position);
 
+  CatmullRomNode resultNode;
+
   resultNode.FocalLength = util::math::CatmullRomInterpolate(n0->FocalLength,
     n1->FocalLength,
     n2->FocalLength,
@@ -194,7 +195,6 @@ void TrackPlayer::DrawUI()
   ImGui::InputFloat("##CameraTrackSpeedMultiplier", &m_NodeTimeSpan, 0.1f, 0, 2);
 
   ImGui::Checkbox("Lock focal length", &m_LockFocalLength);
-  ImGui::Checkbox("Lock focus distance & aperture", &m_LockFocus);
   ImGui::Checkbox("Lock rotation", &m_LockRotation);
   ImGui::Checkbox("Play manually", &m_ManualPlay);
   ImGui::PopStyleVar();

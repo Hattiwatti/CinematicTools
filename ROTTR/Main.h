@@ -23,6 +23,8 @@ public:
 
   void OnConfigChanged() { m_ConfigChanged = true; }
 
+  void RenderTestLight();
+
 private:
   void LoadConfig();
   void SaveConfig();

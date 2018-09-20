@@ -45,14 +45,14 @@ public:
   void DrawUI();
   void DrawTrack() { m_TrackPlayer.DrawNodes(); }
 
-  bool IsCameraEnabled() { return m_CameraEnabled; }
-  bool IsGamepadDisabled() { return m_CameraEnabled && m_GamepadDisabled; };
-  bool IsKbmDisabled() { return m_CameraEnabled && m_KbmDisabled; };
+  bool IsCameraEnabled() const { return m_CameraEnabled; }
+  bool IsGamepadDisabled() const { return m_CameraEnabled && m_GamepadDisabled; };
+  bool IsKbmDisabled() const { return m_CameraEnabled && m_KbmDisabled; };
 
   Camera& GetCamera() { return m_Camera; }
 
   void ReadConfig(INIReader* pReader);
-  const std::string GetConfig();
+  const std::string GetConfig() const;
 
 private:
   void UpdateCamera(double dt);

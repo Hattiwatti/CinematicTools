@@ -104,6 +104,10 @@ bool Main::Initialize()
   return true;
 }
 
+Foundation::SceneLight* pTestLight = nullptr;
+Foundation::SceneEntityData* pEntityData = nullptr;
+Foundation::CommonLightResource* pResource = nullptr;
+
 void Main::Run()
 {
   boost::chrono::high_resolution_clock::time_point lastUpdate = boost::chrono::high_resolution_clock::now();
@@ -111,6 +115,36 @@ void Main::Run()
   {
     boost::chrono::duration<double> dt = boost::chrono::high_resolution_clock::now() - lastUpdate;
     lastUpdate = boost::chrono::high_resolution_clock::now();
+
+    if (GetKeyState(VK_F8) & 0x8000)
+    {
+      if (!pResource)
+        pResource = Foundation::CommonLightResource::Create();
+
+      if (!pEntityData)
+        pEntityData = new Foundation::SceneEntityData();
+
+      util::log::Write("CommonLightResource 0x%I64X", pResource);
+      util::log::Write("SceneEntityData 0x%I64X", pEntityData);
+      Foundation::SceneLight* pNewLight = Foundation::Scene::Singleton()->CreateLight(pResource);
+
+      util::log::Write("SceneLight 0x%I64X", pNewLight);
+      pNewLight->SetEntityData(pEntityData);
+
+      pNewLight->m_CommonRenderLight->m_SceneLight = pNewLight;
+      pNewLight->m_CommonRenderLight->m_LightResource = pResource;
+      pNewLight->m_CommonRenderLight->m_Color = DirectX::XMFLOAT4(1, 1, 1, 1);
+      pNewLight->m_CommonRenderLight->m_AttenuationDistance = 500.f;
+      pNewLight->m_CommonRenderLight->m_Flag2 = 0xC4;
+
+      Foundation::GameRender* pGameRender = Foundation::GameRender::Singleton();
+      pNewLight->m_CommonRenderLight->m_Transform = DirectX::XMMatrixIdentity();
+      pNewLight->m_CommonRenderLight->m_Transform.r[3] = pGameRender->m_CameraTransform.r[3];
+
+      util::log::Write("CommonRenderLight 0x%I64X", pNewLight->m_CommonRenderLight);
+      Sleep(1000);
+      pTestLight = pNewLight;
+    }
 
     m_InputSystem->Update();
     m_CameraManager->Update(dt.count());
@@ -210,4 +244,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   }
 
   return CallWindowProc(g_origWndProc, hwnd, uMsg, wParam, lParam);
+}
+
+
+void Main::RenderTestLight()
+{
+  if (!pTestLight) return;
+
+  Foundation::LightRenderCallback::Singleton()->RenderLight(pTestLight);
 }

@@ -16,7 +16,6 @@ CameraManager::CameraManager() :
   m_Camera(),
   m_TrackPlayer()
 {
-  
   util::log::Ok("Camera manager initialized");
 }
 
@@ -127,14 +126,13 @@ void CameraManager::DrawUI()
   configChanged |= ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
   ImGui::Text("FoV speed");
   configChanged |= ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FocalSpeed, 0.1f, 1.0f, 2);
-  ImGui::Text("Aperture speed");
-  configChanged |= ImGui::InputFloat("##CameraApertureSpeed", &m_Camera.ApertureSpeed, 0.1f, 1.0f, 2);
-  ImGui::Text("Focus speed");
-  configChanged |= ImGui::InputFloat("##CameraFocusSpeed", &m_Camera.FocusSpeed, 0.1f, 1.0f, 2);
+  //ImGui::Text("Aperture speed");
+  //configChanged |= ImGui::InputFloat("##CameraApertureSpeed", &m_Camera.ApertureSpeed, 0.1f, 1.0f, 2);
+  //ImGui::Text("Focus speed");
+  //configChanged |= ImGui::InputFloat("##CameraFocusSpeed", &m_Camera.FocusSpeed, 0.1f, 1.0f, 2);
 
   if (configChanged)
     g_mainHandle->OnConfigChanged();
-
 
   ImGui::NextColumn();
   ImGui::SetColumnOffset(-1, 290);
@@ -147,7 +145,6 @@ void CameraManager::DrawUI()
   ImGui::Checkbox("Smooth mouse", &m_SmoothMouse);
   ImGui::Checkbox("Disable player KBM input", &m_KbmDisabled);
   ImGui::Checkbox("Disable player gamepad input", &m_GamepadDisabled);
-  //ImGui::Checkbox("Weapon LOD fix", &m_WeaponFixEnabled);
   ImGui::PopStyleVar();
 
   ImGui::NextColumn();
@@ -169,7 +166,7 @@ void CameraManager::ReadConfig(INIReader* pReader)
   m_AutoReset = pReader->GetBoolean("Camera", "AutoReset", false);
 }
 
-const std::string CameraManager::GetConfig()
+const std::string CameraManager::GetConfig() const
 {
   std::string config = "[Camera]\n";
   config += "MovementSpeed = " + std::to_string(m_Camera.MovementSpeed) + "\n";

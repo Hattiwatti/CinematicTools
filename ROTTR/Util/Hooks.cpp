@@ -65,6 +65,14 @@ void __fastcall hCameraUpdate(Foundation::GameRender* a1)
 ////   OTHER HOOKS    ////
 //////////////////////////
 
+typedef void(__fastcall* tSceneRenderLights)(__int64, __int64);
+tSceneRenderLights oSceneRenderLights = nullptr;
+
+void __fastcall hSceneRenderLights(__int64 a1, __int64 a2)
+{
+  oSceneRenderLights(a1, a2);
+  g_mainHandle->RenderTestLight();
+}
 
 
 /*----------------------------------------------------------------*/
@@ -140,6 +148,7 @@ void util::hooks::Init()
     util::log::Error("Failed to initialize MinHook, MH_STATUS 0x%X", status);
 
   CreateHook("CameraUpdate", util::offsets::GetOffset("OFFSET_CAMERAUPDATE"), hCameraUpdate, &oCameraUpdate);
+  CreateHook("SceneLightRender", 0x1439D50B0, hSceneRenderLights, &oSceneRenderLights);
 
   CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
 }
