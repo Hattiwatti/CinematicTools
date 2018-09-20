@@ -1,21 +1,25 @@
+#include "Globals.h"
 #include <Windows.h>
-#include <fstream>
-#include "Main.h"
 
-BOOL WINAPI DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved)
+DWORD WINAPI RunCT(LPVOID lpArg)
 {
-	if (dwReason == DLL_PROCESS_ATTACH)
-	{
-		AllocConsole();
-		freopen("CONOUT$", "w", stdout);
-		freopen("CONIN$", "r", stdin);
-		Sleep(1000);
-		HANDLE thread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)Main::Init, NULL, NULL, NULL);
-		CloseHandle(thread);
-	}
-	else if (dwReason == DLL_PROCESS_DETACH)
-	{
-	}
+  g_mainHandle = new Main();
 
-	return true;
+  if (g_mainHandle->Initialize())
+    g_mainHandle->Run();
+
+  delete g_mainHandle;
+  FreeLibraryAndExitThread(g_dllHandle, 0);
+  return 0;
+}
+
+DWORD WINAPI DllMain(_In_ HINSTANCE hInstance, _In_ DWORD fdwReason, _In_ LPVOID lpvReserved)
+{
+  if (fdwReason == DLL_PROCESS_ATTACH)
+  {
+    g_dllHandle = hInstance;
+    CreateThread(NULL, NULL, RunCT, NULL, NULL, NULL);
+  }
+
+  return 1;
 }
