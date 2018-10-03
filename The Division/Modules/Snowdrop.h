@@ -41,7 +41,7 @@ namespace TD
     bool IsInDarkZone()
     {
       typedef bool(__fastcall* tAgentIsInDarkZone)(Agent*);
-      tAgentIsInDarkZone AgentIsInDarkZone = (tAgentIsInDarkZone)(g_pBase + 0xD15910); //
+      tAgentIsInDarkZone AgentIsInDarkZone = (tAgentIsInDarkZone)(g_pBase + 0xD15BC0);
       return AgentIsInDarkZone(this);
     }
   };
@@ -102,7 +102,7 @@ namespace TD
   public:
     static EnvironmentFileSystem* Singleton()
     {
-      return *(EnvironmentFileSystem**)(g_pBase + 0x4606618); //
+      return *(EnvironmentFileSystem**)(g_pBase + 0x4607618); //
     }
 
     __int64 GetEnvByName(const char* name)
@@ -157,7 +157,7 @@ namespace TD
       
       this->m_WeatherTimer = 0;
       this->m_RunWeatherTimer = 0;
-      tCopyEnvironmentValues CopyEnvironmentValues = (tCopyEnvironmentValues)(g_pBase + 0x1A13EF0);
+      tCopyEnvironmentValues CopyEnvironmentValues = (tCopyEnvironmentValues)(g_pBase + 0x1A147F0);
 
       this->m_pCurrentWeather = pWeatherEntity;
       __int64 pNextWeatherBlender = *(__int64*)((__int64)this + 0x168);
@@ -168,7 +168,7 @@ namespace TD
 
     void SetNextWeather(__int64 pWeatherEntity)
     {
-      tCopyEnvironmentValues CopyEnvironmentValues = (tCopyEnvironmentValues)(g_pBase + 0x1A13EF0);
+      tCopyEnvironmentValues CopyEnvironmentValues = (tCopyEnvironmentValues)(g_pBase + 0x1A147F0);
 
       this->m_pNextWeather = pWeatherEntity;
       __int64 pNextWeatherBlender = *(__int64*)((__int64)this + 0x170);
@@ -202,13 +202,13 @@ namespace TD
   public:
     static GameRenderer* Singleton()
     {
-      __int64 ptr1 = *(__int64*)(g_pBase + 0x44E2210); //
+      __int64 ptr1 = *(__int64*)(g_pBase + 0x44E3210); //
       return *(GameRenderer**)(ptr1 + 0x1E8);
     }
 
     static ID3D11Device* GetDevice()
     {
-      return *(ID3D11Device**)(g_pBase + 0x44E2230); //
+      return *(ID3D11Device**)(g_pBase + 0x44E3230); //
     }
   };
 
@@ -234,7 +234,7 @@ namespace TD
   public:
     static RogueClient* Singleton()
     {
-      return *(RogueClient**)(g_pBase + 0x468DB18); //
+      return *(RogueClient**)(g_pBase + 0x468EB28); //
     }
   };
 
@@ -252,7 +252,7 @@ namespace TD
   public:
     static TimeModule* Singleton()
     {
-      return *(TimeModule**)(g_pBase + 0x42B2DC8); //
+      return *(TimeModule**)(g_pBase + 0x42B3DC8); //
     }
   };
 
@@ -274,7 +274,7 @@ namespace TD
   static void ShowMouse(bool arg)
   {
     typedef __int64*(__fastcall* tGetValue)(__int64, __int64*, const char*, int);
-    tGetValue GetValue = (tGetValue)(g_pBase + 0x646E60);
+    tGetValue GetValue = (tGetValue)(g_pBase + 0x646E10);
     TD::Client* pClient = TD::RogueClient::Singleton()->m_pClient;
     __int64 pValueStoreThingy = *(__int64*)((__int64)pClient + 0x38);
     __int64 donutcare = 0;

@@ -119,10 +119,10 @@ void hooks::Init()
   TD::GameCamera* pGameCamera = TD::RogueClient::Singleton()->m_pClient->m_pWorld->m_pCameraManager->m_pCamera1;
   TD::GameCamera* pGameCamera2 = TD::RogueClient::Singleton()->m_pClient->m_pWorld->m_pCameraManager->m_pCamera2;
 
-  __int64 pUIRootVTable = g_pBase + 0x33738E8; //
-  __int64 pDOFVTable = g_pBase + 0x3373DD8; //
+  __int64 pUIRootVTable = g_pBase + 0x3374C58; //
+  __int64 pDOFVTable = g_pBase + 0x3375148; // 
   //__int64 pInputVTable = g_pBase + 0x3350930;
-  __int64* pRendererVTable = *(__int64**)(g_pBase + 0x44E2210); // Fixed
+  __int64* pRendererVTable = *(__int64**)(g_pBase + 0x44E3210); // Fixed
 
   HookVTableFunction(pGameCamera, 4, hCameraUpdate, oCameraUpdate);
   HookVTableFunction(pGameCamera2, 4, hCameraUpdate2, oCameraUpdate2);
