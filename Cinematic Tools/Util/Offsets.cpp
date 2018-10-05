@@ -88,7 +88,7 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
         Mask += '?';
         // In signature it's clearer to mark one wildcard byte as ??
         // so skip the next character.
-        patternOffset += 1;
+        Pattern[patternOffset++] = 0;
         i += 1;
         break;
       }
@@ -96,8 +96,7 @@ util::offsets::Signature::Signature(std::string const& sig, int offset /* = 0 */
       {
         Mask += 'x';
         // Process 2 characters into a single byte
-        Pattern[patternOffset] = (util::CharToByte(sig[i]) << 4) + util::CharToByte(sig[i+1]);
-        patternOffset += 1;
+        Pattern[patternOffset++] = (util::CharToByte(sig[i]) << 4) + util::CharToByte(sig[i+1]);
         i += 1;
       }
     }
