@@ -16,14 +16,14 @@ namespace
   // Fill with hardcoded offsets if you don't want to use scanning
   // These should be relative to the module base.
   std::unordered_map<std::string, __int64> m_HardcodedOffsets = map_list_of
-  ("OFFSET_ENVIRONMENTGFX", 0x1E33660)
-  ("OFFSET_CLOCK", 0x1E33668)
-  ("OFFSET_GRAPHICSENGINE", 0x1DA8DE0)
-  ("OFFSET_INPUTUPDATE", 0x3700F0)
-  ("OFFSET_TIMESCALE", 0x1CC5654)
-  ("OFFSET_WORLDTIME", 0x1E59710)
-  ("OFFSET_UIMANAGER", 0x1DA8DF0)
-  ("OFFSET_CAMERAUPDATE", 0x300F20);
+  ("OFFSET_ENVIRONMENTGFX", 0x1E58D00)
+    ("OFFSET_CLOCK", 0x1E58D08)
+    ("OFFSET_GRAPHICSENGINE", 0x1DCE460)
+    ("OFFSET_INPUTUPDATE", 0x370AA0)
+    ("OFFSET_TIMESCALE", 0x1CEA6BC)
+    ("OFFSET_WORLDTIME", 0x1E7EDD0)
+    ("OFFSET_UIMANAGER", 0x1DCE470)
+    ("OFFSET_CAMERAUPDATE", 0x301EF0);
 
   bool DataCompare(BYTE* pData, BYTE* bSig, const char* szMask)
   {

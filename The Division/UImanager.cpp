@@ -88,6 +88,8 @@ UIManager::UIManager()
   m_hasKeyboardFocus = false;
   m_hasMouseFocus = false;
   m_isResizing = false;
+
+  util::log::Ok("UI initialized");
 }
 
 UIManager::~UIManager()

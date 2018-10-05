@@ -10,7 +10,7 @@ static const char* g_moduleName = "theHunterCotW_F.exe";
 static const char* g_className = "thcotw";
 static const char* g_configFile = "./Cinematic Tools/config.ini";
 
-static const char* g_supportedVersion = "Jun 19 2018";
+static const char* g_supportedVersion = "Aug 27 2018";
 
 Main* g_mainHandle = nullptr;
 HINSTANCE g_dllHandle = NULL;
@@ -44,7 +44,7 @@ bool Main::Initialize()
 
   util::log::Init();
   util::log::Write("Cinematic Tools for %s\n", g_gameName);
-
+  Sleep(1000);
   // Needed for ImGui + other functionality
   g_gameHwnd = FindWindowA(g_className, NULL);
   if (g_gameHwnd == NULL)

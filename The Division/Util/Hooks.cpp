@@ -116,6 +116,8 @@ namespace
 
 void hooks::Init()
 {
+  util::log::Write("Initializing hooks");
+
   TD::GameCamera* pGameCamera = TD::RogueClient::Singleton()->m_pClient->m_pWorld->m_pCameraManager->m_pCamera1;
   TD::GameCamera* pGameCamera2 = TD::RogueClient::Singleton()->m_pClient->m_pWorld->m_pCameraManager->m_pCamera2;
 
