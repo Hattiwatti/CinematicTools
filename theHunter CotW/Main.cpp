@@ -10,7 +10,7 @@ static const char* g_moduleName = "theHunterCotW_F.exe";
 static const char* g_className = "thcotw";
 static const char* g_configFile = "./Cinematic Tools/config.ini";
 
-static const char* g_supportedVersion = "Aug 27 2018";
+static const char* g_supportedVersion = "Sep 26 2018";
 
 Main* g_mainHandle = nullptr;
 HINSTANCE g_dllHandle = NULL;
@@ -60,6 +60,12 @@ bool Main::Initialize()
     util::log::Error("Failed to retrieve module handle, GetLastError 0x%X", GetLastError());
     return false;
   }
+
+  // DirectXTK requires this for WIC components
+  HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+  if (FAILED(hr))
+    util::log::Warning("CoInitializeEx failed, HRESULT 0x%X", hr);
+
 
   // Retrieve game version and make a const variable for whatever version
   // the tools support. If versions mismatch, scan for offsets.
