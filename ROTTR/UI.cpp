@@ -136,41 +136,11 @@ void UI::Draw()
     ImGui::GetWindowDrawList()->AddImage(m_TitleImage.pSRV.Get(), ImVec2(windowPos.x + 210, windowPos.y + 85), ImVec2(windowPos.x + 592, windowPos.y + 131));
 
     ImGui::PushFont(io.Fonts->Fonts[2]);
-    ImGui::Dummy(ImVec2(50, 35));
+    ImGui::Dummy(ImVec2(230, 35));
     ImGui::SameLine(0, 0);
 
     if (ImGui::ToggleButton("CAMERA", ImVec2(160, 35), m_SelectedMenu == SelectedMenu::Camera, false))
       m_SelectedMenu = SelectedMenu::Camera;
-
-    ImGui::SameLine(0, 20);
-    if (ImGui::Button("VISUALS", ImVec2(160, 35)))
-      ImGui::OpenPopup("visualMenus");
-
-    ImVec2 popupVisualsPos(windowPos.x + 230, windowPos.y + 78);
-    if (ImGui::IsPopupOpen("visualMenus"))
-      ImGui::SetNextWindowPos(popupVisualsPos);
-
-    if (ImGui::BeginPopup("visualMenus"))
-    {
-      if (ImGui::ToggleButton("Camera", ImVec2(158, 35), m_SelectedMenu == SelectedMenu::Visuals_Camera, false))
-      {
-        m_SelectedMenu = SelectedMenu::Visuals_Camera;
-        ImGui::CloseCurrentPopup();
-      }
-
-      if (ImGui::ToggleButton("Depth of Field", ImVec2(160, 35), m_SelectedMenu == SelectedMenu::Visuals_DOF, false))
-      {
-        m_SelectedMenu = SelectedMenu::Visuals_DOF;
-        ImGui::CloseCurrentPopup();
-      }
-
-      ImGui::Dummy(ImVec2(0, 0));
-      ImGui::EndPopup();
-    }
-
-    ImGui::SameLine(0, 20);
-    if (ImGui::ToggleButton("SCENE", ImVec2(160, 35), m_SelectedMenu == SelectedMenu::Scene, false))
-      m_SelectedMenu = SelectedMenu::Scene;
 
     ImGui::SameLine(0, 20);
     if (ImGui::ToggleButton("MISC", ImVec2(160, 35), m_SelectedMenu == SelectedMenu::Misc, false))
@@ -178,10 +148,8 @@ void UI::Draw()
 
     ImGui::PopFont();
 
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 50, windowPos.y + 78), ImVec2(windowPos.x + 210, windowPos.y + 78), 0xFF1C79E5, 2);
     ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 230, windowPos.y + 78), ImVec2(windowPos.x + 390, windowPos.y + 78), 0xFF1C79E5, 2);
     ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 410, windowPos.y + 78), ImVec2(windowPos.x + 570, windowPos.y + 78), 0xFF1C79E5, 2);
-    ImGui::GetWindowDrawList()->AddLine(ImVec2(windowPos.x + 590, windowPos.y + 78), ImVec2(windowPos.x + 750, windowPos.y + 78), 0xFF1C79E5, 2);
 
     ImGui::Dummy(ImVec2(0, 50));
     ImGui::Dummy(ImVec2(0, 0));
@@ -192,14 +160,6 @@ void UI::Draw()
       if (m_SelectedMenu == SelectedMenu::Camera)
       {
         g_mainHandle->GetCameraManager()->DrawUI();
-      }
-      else if (m_SelectedMenu >= SelectedMenu::Visuals_Camera && m_SelectedMenu <= SelectedMenu::Visuals_DOF)
-      {
-        //g_mainHandle->GetVisualEnvManager()->DrawUI(m_SelectedMenu);
-      }
-      else if (m_SelectedMenu == SelectedMenu::Scene)
-      {
-        //g_mainHandle->GetSceneEditor()->DrawUI();
       }
       else if (m_SelectedMenu == SelectedMenu::Misc)
       {
@@ -258,4 +218,5 @@ void UI::Update(double dt)
 void UI::Toggle()
 {
   m_Enabled = !m_Enabled;
+  Foundation::UiMenuStateManager::Singleton()->ShowMouse(m_Enabled);
 }

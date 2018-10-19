@@ -104,9 +104,9 @@ bool Main::Initialize()
   return true;
 }
 
-Foundation::SceneLight* pTestLight = nullptr;
-Foundation::SceneEntityData* pEntityData = nullptr;
-Foundation::CommonLightResource* pResource = nullptr;
+// Foundation::SceneLight* pTestLight = nullptr;
+// Foundation::SceneEntityData* pEntityData = nullptr;
+// Foundation::CommonLightResource* pResource = nullptr;
 
 void Main::Run()
 {
@@ -116,37 +116,38 @@ void Main::Run()
     boost::chrono::duration<double> dt = boost::chrono::high_resolution_clock::now() - lastUpdate;
     lastUpdate = boost::chrono::high_resolution_clock::now();
 
-    if (GetKeyState(VK_F8) & 0x8000)
-    {
-      if (!pResource)
-      {
-        pResource = Foundation::CommonLightResource::Create();
-        pResource->LoadDefaultValues();
-        pResource->m_Color = { 1, 1, 1, 1 };
-      }
-
-      if (!pEntityData)
-        pEntityData = new Foundation::SceneEntityData();
-
-      util::log::Write("CommonLightResource 0x%I64X", pResource);
-      util::log::Write("SceneEntityData 0x%I64X", pEntityData);
-      Foundation::SceneLight* pNewLight = Foundation::Scene::Singleton()->CreateLight(pResource);
-
-      util::log::Write("SceneLight 0x%I64X", pNewLight);
-      pNewLight->SetEntityData(pEntityData);
-
-      pNewLight->m_CommonRenderLight->LoadDefaultValues();
-      pNewLight->m_CommonRenderLight->m_SceneLight = pNewLight;
-      pNewLight->m_CommonRenderLight->m_LightResource = pResource;
-      pNewLight->m_CommonRenderLight->m_AttenuationDistance = 200.f;
-
-      Foundation::GameRender* pGameRender = Foundation::GameRender::Singleton();
-      pNewLight->m_CommonRenderLight->m_Transform = pGameRender->m_CameraTransform;
-
-      util::log::Write("CommonRenderLight 0x%I64X", pNewLight->m_CommonRenderLight);
-      Sleep(1000);
-      pTestLight = pNewLight;
-    }
+//     if (GetKeyState(VK_F8) & 0x8000)
+//     {
+//       if (!pResource)
+//       {
+//         pResource = Foundation::CommonLightResource::Create();
+//         //pResource->LoadDefaultValues();
+//         //pResource->m_Color = { 1, 1, 1, 1 };
+//         pResource = (Foundation::CommonLightResource*)0x93B236E0;
+//       }
+// 
+//       if (!pEntityData)
+//         pEntityData = new Foundation::SceneEntityData();
+// 
+//       util::log::Write("CommonLightResource 0x%I64X", pResource);
+//       util::log::Write("SceneEntityData 0x%I64X", pEntityData);
+//       Foundation::SceneLight* pNewLight = Foundation::Scene::Singleton()->CreateLight(pResource);
+// 
+//       util::log::Write("SceneLight 0x%I64X", pNewLight);
+//       pNewLight->SetEntityData(pEntityData);
+// 
+//       //pNewLight->m_CommonRenderLight->LoadDefaultValues();
+//       pNewLight->m_CommonRenderLight->m_SceneLight = pNewLight;
+//       pNewLight->m_CommonRenderLight->m_LightResource = pResource;
+//       pNewLight->m_CommonRenderLight->m_AttenuationDistance = 200.f;
+// 
+//       Foundation::GameRender* pGameRender = Foundation::GameRender::Singleton();
+//       pNewLight->m_CommonRenderLight->m_Transform = pGameRender->m_CameraTransform;
+// 
+//       util::log::Write("CommonRenderLight 0x%I64X", pNewLight->m_CommonRenderLight);
+//       Sleep(1000);
+//       pTestLight = pNewLight;
+//     }
 
     m_InputSystem->Update();
     m_CameraManager->Update(dt.count());
@@ -221,7 +222,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
       if (!g_mainHandle->GetUI()->IsEnabled())
         g_mainHandle->GetInputSystem()->HandleRawInput(lParam);
-      else if (g_mainHandle->GetUI()->HasKeyboardFocus())
+      else// if (g_mainHandle->GetUI()->HasKeyboardFocus())
         return TRUE;
       break;
     }
@@ -249,12 +250,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-void Main::RenderTestLight()
-{
-  if (!pTestLight) return;
-
-  Foundation::LightRenderCallback::Singleton()->RenderLight(pTestLight);
-}
+// void Main::RenderTestLight()
+// {
+//   if (!pTestLight) return;
+// 
+//   pTestLight->m_CommonRenderLight->ShadowmapUpdate();
+//   Foundation::LightRenderCallback::Singleton()->RenderLight(pTestLight);
+//   //pTestLight->m_CommonRenderLight->ShadowmapUpdate();
+// }
 
 const unsigned char Foundation::CommonLightResource::DefaultVoxelData[0xFF] = 
 { 0xFF, 0xFE, 0xFC, 0xFB, 0xFA, 0xF8, 0xF7, 0xF6, 0xF4, 0xF3, 0xF2, 0xF0, 0xEF, 0xED, 0xEC, 0xEB,

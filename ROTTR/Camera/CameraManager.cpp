@@ -14,7 +14,9 @@ CameraManager::CameraManager() :
   m_KbmDisabled(true),
   m_SmoothMouse(true),
   m_Camera(),
-  m_TrackPlayer()
+  m_TrackPlayer(),
+  m_HudDisabled(false),
+  m_TimeFreezeEnabled(false)
 {
   util::log::Ok("Camera manager initialized");
 }
@@ -33,11 +35,25 @@ void CameraManager::HotkeyUpdate()
 
   if (pInput->WentDown(Action::ToggleHUD))
   {
+    m_HudDisabled = !m_HudDisabled;
   }
 
   if (pInput->WentDown(Action::ToggleFreezeTime))
   {
-  
+    m_TimeFreezeEnabled = !m_TimeFreezeEnabled;
+
+    if (m_TimeFreezeEnabled)
+    {
+      typedef void(__fastcall* tFreezeGame)(int a1);
+      tFreezeGame FreezeGame = (tFreezeGame)util::offsets::GetOffset("OFFSET_FREEZEGAME");
+      FreezeGame(8);
+    }
+    else
+    {
+      typedef void(__fastcall* tUnfreezeGame)(int a1);
+      tUnfreezeGame UnfreezeGame = (tUnfreezeGame)util::offsets::GetOffset("OFFSET_UNFREEZEGAME");
+      UnfreezeGame(8);
+    }
   }
 
   if (m_CameraEnabled)
@@ -76,6 +92,7 @@ void CameraManager::OnCameraUpdate(Foundation::GameRender* pGameRender)
     cameraTransform.r[i].m128_f32[2] = val;
   }
 
+  pGameRender->m_FieldOfView = XMConvertToRadians(m_Camera.FieldOfView);
   pGameRender->m_CameraTransform = cameraTransform;
   pGameRender->m_PrevTransform = cameraTransform;
 }
@@ -86,7 +103,6 @@ void CameraManager::Update(double dt)
   if (m_UIRequestReset) ResetCamera();
 
   UpdateInput(dt);
-  //UpdateCamera(dt);
 }
 
 void CameraManager::DrawUI()
@@ -125,11 +141,7 @@ void CameraManager::DrawUI()
   ImGui::Text("Roll speed");
   configChanged |= ImGui::InputFloat("##CameraRollSpeed", &m_Camera.RollSpeed, 0.1f, 1.0f, 2);
   ImGui::Text("FoV speed");
-  configChanged |= ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FocalSpeed, 0.1f, 1.0f, 2);
-  //ImGui::Text("Aperture speed");
-  //configChanged |= ImGui::InputFloat("##CameraApertureSpeed", &m_Camera.ApertureSpeed, 0.1f, 1.0f, 2);
-  //ImGui::Text("Focus speed");
-  //configChanged |= ImGui::InputFloat("##CameraFocusSpeed", &m_Camera.FocusSpeed, 0.1f, 1.0f, 2);
+  configChanged |= ImGui::InputFloat("##CameraFoVSpeed", &m_Camera.FovSpeed, 0.1f, 1.0f, 2);
 
   if (configChanged)
     g_mainHandle->OnConfigChanged();
@@ -138,9 +150,9 @@ void CameraManager::DrawUI()
   ImGui::SetColumnOffset(-1, 290);
   ImGui::PushItemWidth(200);
 
-  ImGui::Text("Focal Length");
+  ImGui::Text("Field of view");
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
-  ImGui::InputFloat("##CameraFoV", &m_Camera.FocalLength, 1.f, 1.f, 2);
+  ImGui::InputFloat("##CameraFoV", &m_Camera.FieldOfView, 1.f, 1.f, 2);
   ImGui::Checkbox("Reset camera automatically", &m_AutoReset);
   ImGui::Checkbox("Smooth mouse", &m_SmoothMouse);
   ImGui::Checkbox("Disable player KBM input", &m_KbmDisabled);
@@ -160,9 +172,7 @@ void CameraManager::ReadConfig(INIReader* pReader)
   m_Camera.MovementSpeed = pReader->GetReal("Camera", "MovementSpeed", 1.0f);
   m_Camera.RotationSpeed = pReader->GetReal("Camera", "RotationSpeed", XM_PI / 4);
   m_Camera.RollSpeed = pReader->GetReal("Camera", "RollSpeed", XM_PI / 8);
-  m_Camera.FocalSpeed = pReader->GetReal("Camera", "FocalSpeed", 5.0f);
-  m_Camera.ApertureSpeed = pReader->GetReal("Camera", "ApertureSpeed", 1.0f);
-  m_Camera.FocusSpeed = pReader->GetReal("Camera", "FocusSpeed", 1.0f);
+  m_Camera.FovSpeed = pReader->GetReal("Camera", "FovSpeed", 5.0f);
   m_AutoReset = pReader->GetBoolean("Camera", "AutoReset", false);
 }
 
@@ -172,9 +182,7 @@ const std::string CameraManager::GetConfig() const
   config += "MovementSpeed = " + std::to_string(m_Camera.MovementSpeed) + "\n";
   config += "RotationSpeed = " + std::to_string(m_Camera.RotationSpeed) + "\n";
   config += "RollSpeed = " + std::to_string(m_Camera.RollSpeed) + "\n";
-  config += "FocalSpeed = " + std::to_string(m_Camera.FocalSpeed) + "\n";
-  config += "ApertureSpeed = " + std::to_string(m_Camera.ApertureSpeed) + "\n";
-  config += "FocusSpeed = " + std::to_string(m_Camera.FocusSpeed) + "\n";
+  config += "FovSpeed = " + std::to_string(m_Camera.FovSpeed) + "\n";
   config += "AutoReset = " + std::to_string(m_AutoReset) + "\n";
 
   return config;
@@ -197,14 +205,7 @@ void CameraManager::UpdateCamera(double dt)
   // Make sure it's normalized
   qRotation = XMQuaternionNormalize(qRotation);
 
-  m_Camera.FocalLength += m_CameraInput.dFocalLength * dt * m_Camera.FocalSpeed;
-  m_Camera.FocusDistance += m_CameraInput.dFocusDistance * dt * m_Camera.FocusSpeed;
-  m_Camera.Aperture += m_CameraInput.dAperture * dt * m_Camera.ApertureSpeed;
-
-  if (m_Camera.FocusDistance < 0.01f)
-    m_Camera.FocusDistance = 0.01f;
-  if (m_Camera.Aperture < 0.01f)
-    m_Camera.Aperture = 0.01f;
+  m_Camera.FieldOfView += m_CameraInput.dFocalLength * dt * m_Camera.FovSpeed;
 
   // If a camera track is being played, get the current
   // state and overwrite position/rotation/FoV.
@@ -215,13 +216,8 @@ void CameraManager::UpdateCamera(double dt)
     if (m_TrackPlayer.IsRotationLocked())
       qRotation = XMLoadFloat4(&resultNode.Rotation);
 
-    if (m_TrackPlayer.IsFocalLengthLocked())
-      m_Camera.FocalLength = resultNode.FocalLength;
-    if (m_TrackPlayer.IsFocusLocked())
-    {
-      m_Camera.FocusDistance = resultNode.FocusDistance;
-      m_Camera.Aperture = resultNode.Aperture;
-    }
+    if (m_TrackPlayer.IsFovLocked())
+      m_Camera.FieldOfView = resultNode.FieldOfView;
 
     vPosition = XMLoadFloat3(&resultNode.Position);
   }
@@ -230,7 +226,7 @@ void CameraManager::UpdateCamera(double dt)
   XMMATRIX rotMatrix = XMMatrixRotationQuaternion(qRotation);
 
   // Add delta positions
-  // * 100 because ROTTR coordinates seem to be in centimeters(?)
+  // * 100 because ROTTR coordinates seem to be in centimeters
   if (!m_TrackPlayer.IsPlaying())
   {
     vPosition += m_CameraInput.dX * rotMatrix.r[0] * dt * m_Camera.MovementSpeed * 100;
@@ -272,10 +268,7 @@ void CameraManager::UpdateInput(double dt)
   m_CameraInput.dPitch = pInput->GetActionState(Camera_PitchDown) - pInput->GetActionState(Camera_PitchUp);
   m_CameraInput.dYaw = pInput->GetActionState(Camera_YawRight) - pInput->GetActionState(Camera_YawLeft);
   m_CameraInput.dRoll = pInput->GetActionState(Camera_RollLeft) - pInput->GetActionState(Camera_RollRight);
-  m_CameraInput.dFocalLength = pInput->GetActionState(Camera_IncFocalLength) - pInput->GetActionState(Camera_DecFocalLength);
-  m_CameraInput.dFocusDistance = pInput->GetActionState(Camera_IncFocus) - pInput->GetActionState(Camera_DecFocus);
-  m_CameraInput.dAperture = pInput->GetActionState(Camera_IncAperture) - pInput->GetActionState(Camera_DecAperture);
-
+  m_CameraInput.dFocalLength = pInput->GetActionState(Camera_IncFieldOfView) - pInput->GetActionState(Camera_DecFieldOfView);
   if (m_KbmDisabled && !g_mainHandle->GetUI()->IsEnabled())
   {
     XMFLOAT3 state = pInput->GetMouseState();

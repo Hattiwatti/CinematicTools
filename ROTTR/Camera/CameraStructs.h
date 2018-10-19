@@ -21,9 +21,7 @@ struct CatmullRomNode
   DirectX::XMFLOAT3 Position;
   DirectX::XMFLOAT4 Rotation;
   DirectX::XMMATRIX Transform;
-  float FocalLength;
-  float Aperture;
-  float FocusDistance;
+  float FieldOfView;
   float TimeStamp;
 };
 
@@ -31,16 +29,12 @@ struct Camera
 {
   DirectX::XMFLOAT3 Position{ 0,0,0 };
   DirectX::XMFLOAT4 Rotation{ 0,0,0,1 };
-  float FocalLength{ 30.f };
-  float Aperture{ 4.f };
-  float FocusDistance{ 10.f };
+  float FieldOfView{ 50.f };
 
   float MovementSpeed{ 1.0f };
   float RotationSpeed{ DirectX::XM_PI/4 };
   float RollSpeed{ DirectX::XM_PI / 8 };
-  float FocalSpeed{ 5.0f };
-  float ApertureSpeed{ 1.0f };
-  float FocusSpeed{ 1.0f };
+  float FovSpeed{ 5.0f };
 
   DirectX::XMFLOAT4X4 Transform{  1,0,0,0,
                                   0,1,0,0,

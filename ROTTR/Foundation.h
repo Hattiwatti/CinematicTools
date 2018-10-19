@@ -2,9 +2,43 @@
 #include <d3d11.h>
 #include "Util/Util.h"
 
+namespace Nx
+{
+  class NxGameStateImpl
+  {
+  public:
+    virtual void Func1();
+    virtual void Func2();
+    virtual void Func3();
+    virtual void Func4();
+    virtual void Func5();
+    virtual void Func6();
+    virtual void Func7();
+    virtual void Func8();
+    virtual void Func9();
+    virtual void Func10();
+    virtual void Func11();
+    virtual void Func12();
+    virtual void Func13();
+    virtual void Func14();
+    virtual void PushState(const char* state);
+    virtual void Func16();
+    virtual void PopState(const char* state, int a2);
+
+  public:
+    static NxGameStateImpl* Singleton()
+    {
+      HMODULE hModule = GetModuleHandleA("NxApp_GoldMaster.dll");
+      typedef NxGameStateImpl*(__fastcall* tGetGameState)();
+      tGetGameState GetGameState = (tGetGameState)GetProcAddress(hModule, "NxApp_GetGameState");
+
+      return GetGameState();
+    }
+  };
+}
+
 namespace Foundation
 {
-
   class GameRender;
   class CommonLightResource;
   class CommonRenderLight;
@@ -79,7 +113,46 @@ namespace Foundation
   class CommonRenderLight
   {
   public:
-    char Pad000[0x30];
+    virtual void Func1();
+    virtual void Func2();
+    virtual void Func3();
+    virtual void Func4();
+    virtual void Func5();
+    virtual void Func6();
+    virtual void Func7();
+    virtual void Func8();
+    virtual void Func9();
+    virtual void Func10();
+    virtual void Func11();
+    virtual void Func12();
+    virtual void Func13();
+    virtual void Func14();
+    virtual void Func15();
+    virtual void Func16();
+    virtual void Func17();
+    virtual void Func18();
+    virtual void Func19();
+    virtual void Func20();
+    virtual void Func21();
+    virtual void Func22();
+    virtual void Func23();
+    virtual void Func24();
+    virtual void Func25();
+    virtual void Func26();
+    virtual void Func27();
+    virtual void Func28();
+    virtual void Func29();
+    virtual void Func30();
+    virtual void Func31();
+    virtual void Func32();
+    virtual void Func33();
+    virtual void Func34();
+    virtual void Func35();
+    virtual void Func36();
+    virtual __int64 ShadowmapUpdate();
+    virtual void Func38();
+
+    char Pad008[0x20];
     SceneLight* m_SceneLight;
     CommonLightResource* m_LightResource;
     float m_Unk1;                   // 0x40 Default 3.61
@@ -263,5 +336,36 @@ namespace Foundation
   public:
     char Pad000[0x60];
     IDXGISwapChain* m_SwapChain;
+  };
+
+  class UiMenuStateManager
+  {
+  public:
+    char Pad000[0xA10];
+    unsigned int m_State1;
+    unsigned int m_State2;
+
+  public:
+    //static bool HasPushedState;
+
+    static UiMenuStateManager* Singleton()
+    {
+      return *(UiMenuStateManager**)(util::offsets::GetOffset("OFFSET_UIMENUSTATEMANAGER"));
+    }
+
+    void ShowMouse(bool show)
+    {
+      Nx::NxGameStateImpl* pNxGameState = Nx::NxGameStateImpl::Singleton();
+      if (show)//&& m_State1 == 0xFFFFFFFF)
+      {
+        pNxGameState->PushState("Menu");
+        //HasPushedState = true;
+      }
+      else if (!show)// && HasPushedState)
+      {
+        pNxGameState->PopState("Menu", 1);
+        //HasPushedState = false;
+      }
+    }
   };
 }

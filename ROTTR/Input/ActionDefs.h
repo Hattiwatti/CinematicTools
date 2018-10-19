@@ -32,12 +32,8 @@ enum Action
   Camera_RollLeft,
   Camera_RollRight,
 
-  Camera_IncFocalLength,
-  Camera_DecFocalLength,
-  Camera_IncAperture,
-  Camera_DecAperture,
-  Camera_IncFocus,
-  Camera_DecFocus,
+  Camera_IncFieldOfView,
+  Camera_DecFieldOfView,
 
   Track_CreateNode,
   Track_DeleteNode,
@@ -130,18 +126,14 @@ static const std::map<Action, std::string> ActionStringMap = boost::assign::map_
 (Camera_PitchDown, "Camera_PitchDown")
 (Camera_RollLeft, "Camera_RollLeft")
 (Camera_RollRight, "Camera_RollRight")
-(Camera_IncFocalLength, "Camera_IncFocalLength")
-(Camera_DecFocalLength, "Camera_DecFocalLength")
+(Camera_IncFieldOfView, "Camera_IncFieldOfView")
+(Camera_DecFieldOfView, "Camera_DecFieldOfView")
 (Track_CreateNode, "Track_CreateNode")
 (Track_DeleteNode, "Track_DeleteNode")
 (Track_Play, "Track_Play")
 (Object_PickUp, "Object_PickUp")
 (Object_Rotate, "Object_Rotate")
-(Object_Remove, "Object_Remove")
-(Camera_IncAperture, "Camera_IncAperture")
-(Camera_DecAperture, "Camera_DecAperture")
-(Camera_IncFocus, "Camera_IncFocus")
-(Camera_DecFocus, "Camera_DecFocus");
+(Object_Remove, "Object_Remove");
 
 
 static const std::map<Action, std::string> ActionUIStringMap = boost::assign::map_list_of
@@ -167,18 +159,14 @@ static const std::map<Action, std::string> ActionUIStringMap = boost::assign::ma
 (Camera_PitchDown, "Pitch down")
 (Camera_RollLeft, "Roll left")
 (Camera_RollRight, "Roll right")
-(Camera_IncFocalLength, "Increase focal length")
-(Camera_DecFocalLength, "Decrease focal length")
+(Camera_IncFieldOfView, "Increase field of view")
+(Camera_DecFieldOfView, "Decrease field of view")
 (Track_CreateNode, "Create track node")
 (Track_DeleteNode, "Delete track node")
 (Track_Play, "Play track")
 (Object_PickUp, "Pick up object")
 (Object_Rotate, "Rotate object")
-(Object_Remove, "Remove object")
-(Camera_IncAperture, "Increase lens aperture")
-(Camera_DecAperture, "Decrease lens aperture")
-(Camera_IncFocus, "Increase focus distance")
-(Camera_DecFocus, "Decrease focus distance");
+(Object_Remove, "Remove object");
 
 
 static const std::map<Action, int> DefaultKeyboardMap = boost::assign::map_list_of
@@ -204,18 +192,14 @@ static const std::map<Action, int> DefaultKeyboardMap = boost::assign::map_list_
 (Camera_PitchDown, VK_DOWN)
 (Camera_RollLeft, VK_NUMPAD1)
 (Camera_RollRight, VK_NUMPAD3)
-(Camera_IncFocalLength, VK_PRIOR)
-(Camera_DecFocalLength, VK_NEXT)
+(Camera_IncFieldOfView, VK_PRIOR)
+(Camera_DecFieldOfView, VK_NEXT)
 (Track_CreateNode, 'F')
 (Track_DeleteNode, 'G')
 (Track_Play, 'P')
 (Object_PickUp, 'Q')
 (Object_Rotate, 'E')
-(Object_Remove, 'R')
-(Camera_IncAperture, 0)
-(Camera_DecAperture, 0)
-(Camera_IncFocus, 0)
-(Camera_DecFocus, 0);
+(Object_Remove, 'R');
 
 static const std::map<Action, GamepadKey> DefaultGamepadMap = boost::assign::map_list_of
 (ToggleUI, GamepadKey::None)
@@ -240,15 +224,11 @@ static const std::map<Action, GamepadKey> DefaultGamepadMap = boost::assign::map
 (Camera_PitchDown, GamepadKey::RightThumb_YNeg)
 (Camera_RollLeft, GamepadKey::LeftShoulder)
 (Camera_RollRight, GamepadKey::RightShoulder)
-(Camera_IncFocalLength, GamepadKey::LeftThumb)
-(Camera_DecFocalLength, GamepadKey::RightThumb)
+(Camera_IncFieldOfView, GamepadKey::LeftThumb)
+(Camera_DecFieldOfView, GamepadKey::RightThumb)
 (Track_CreateNode, GamepadKey::None)
 (Track_DeleteNode, GamepadKey::None)
 (Track_Play, GamepadKey::None)
 (Object_PickUp, GamepadKey::None)
 (Object_Rotate, GamepadKey::None)
-(Object_Remove, GamepadKey::None)
-(Camera_IncAperture, GamepadKey::DPad_Left)
-(Camera_DecAperture, GamepadKey::DPad_Right)
-(Camera_IncFocus, GamepadKey::DPad_Up)
-(Camera_DecFocus, GamepadKey::DPad_Down);
+(Object_Remove, GamepadKey::None);

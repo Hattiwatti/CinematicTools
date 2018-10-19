@@ -21,8 +21,7 @@ public:
 
   bool IsPlaying() { return m_IsPlaying; }
   bool IsRotationLocked() { return m_LockRotation; }
-  bool IsFocalLengthLocked() { return m_LockFocalLength; }
-  bool IsFocusLocked() { return m_LockFocus; }
+  bool IsFovLocked() { return m_LockFieldOfView; }
 
 private:
   void CreateTrack();
@@ -35,8 +34,7 @@ private:
   bool m_IsPlaying;
 
   bool m_LockRotation;
-  bool m_LockFocalLength;
-  bool m_LockFocus;
+  bool m_LockFieldOfView;
 
   bool m_ManualPlay;
   float m_NodeTimeSpan;

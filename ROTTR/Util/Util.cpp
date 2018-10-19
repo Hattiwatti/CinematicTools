@@ -94,3 +94,14 @@ BYTE util::CharToByte(char c)
   sscanf_s(&c, "%hhx", &b);
   return b;
 }
+
+BOOL util::WriteMemory(DWORD_PTR dwAddress, const void* cpvPatch, DWORD dwSize)
+{
+  DWORD dwProtect;
+  if (VirtualProtect((void*)dwAddress, dwSize, PAGE_READWRITE, &dwProtect)) //Unprotect the memory
+    memcpy((void*)dwAddress, cpvPatch, dwSize); //Write our patch
+  else
+    return false; //Failed to unprotect, so return false..
+
+  return VirtualProtect((void*)dwAddress, dwSize, dwProtect, new DWORD); //Reprotect the memory
+}

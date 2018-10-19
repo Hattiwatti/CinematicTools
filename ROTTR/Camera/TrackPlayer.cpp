@@ -9,8 +9,7 @@ using namespace DirectX;
 TrackPlayer::TrackPlayer() :
   m_IsPlaying(false),
   m_LockRotation(true),
-  m_LockFocalLength(false),
-  m_LockFocus(false),
+  m_LockFieldOfView(false),
   m_ManualPlay(false),
   m_NodeTimeSpan(3.0f),
   m_CurrentNode(0),
@@ -34,9 +33,7 @@ void TrackPlayer::CreateNode(Camera const& camera)
 
   CatmullRomNode newNode;
 
-  newNode.FocalLength = camera.FocalLength;
-  newNode.FocusDistance = camera.FocusDistance;
-  newNode.Aperture = camera.Aperture;
+  newNode.FieldOfView = camera.FieldOfView;
   newNode.Rotation = camera.Rotation;
   newNode.Position = camera.Position;
 
@@ -155,20 +152,10 @@ CatmullRomNode TrackPlayer::PlayForward(double dt, bool ignoreManual /* = false 
 
   CatmullRomNode resultNode;
 
-  resultNode.FocalLength = util::math::CatmullRomInterpolate(n0->FocalLength,
-    n1->FocalLength,
-    n2->FocalLength,
-    n3->FocalLength, mu);
-
-  resultNode.Aperture = util::math::CatmullRomInterpolate(n0->Aperture,
-    n1->Aperture,
-    n2->Aperture,
-    n3->Aperture, mu);
-
-  resultNode.FocusDistance = util::math::CatmullRomInterpolate(n0->FocusDistance,
-    n1->FocusDistance,
-    n2->FocusDistance,
-    n3->FocusDistance, mu);
+  resultNode.FieldOfView = util::math::CatmullRomInterpolate(n0->FieldOfView,
+    n1->FieldOfView,
+    n2->FieldOfView,
+    n3->FieldOfView, mu);
 
   XMVECTOR resultRot = XMVectorCatmullRom(qRot0, qRot1, qRot2, qRot3, mu);
   XMVECTOR resultPos = XMVectorCatmullRom(vPos0, vPos1, vPos2, vPos3, mu);
@@ -194,7 +181,7 @@ void TrackPlayer::DrawUI()
   ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 10));
   ImGui::InputFloat("##CameraTrackSpeedMultiplier", &m_NodeTimeSpan, 0.1f, 0, 2);
 
-  ImGui::Checkbox("Lock focal length", &m_LockFocalLength);
+  ImGui::Checkbox("Lock focal length", &m_LockFieldOfView);
   ImGui::Checkbox("Lock rotation", &m_LockRotation);
   ImGui::Checkbox("Play manually", &m_ManualPlay);
   ImGui::PopStyleVar();

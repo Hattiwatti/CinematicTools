@@ -9,8 +9,13 @@
 #include <Windows.h>
 
 #pragma comment(lib, "libMinHook.x64.lib")
+
 // Function definitions
 typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
+
+typedef void(__fastcall* tCameraUpdate)(Foundation::GameRender*);
+typedef __int64(__fastcall* tInputDeviceUpdate)(__int64, __int64, __int64, __int64);
+typedef int(__fastcall* tScaleformRenderer_Render)(__int64);
 
 //////////////////////////
 ////   RENDER HOOKS   ////
@@ -21,31 +26,32 @@ typedef DWORD(WINAPI* tIDXGISwapChain_Present)(IDXGISwapChain*, UINT, UINT);
 // on top, like the tools UI.
 
 tIDXGISwapChain_Present oIDXGISwapChain_Present = nullptr;
+tScaleformRenderer_Render oScaleformRenderer_Render = nullptr;
 
 DWORD WINAPI hIDXGISwapChain_Present(IDXGISwapChain* pSwapchain, UINT SyncInterval, UINT Flags)
 {
   if (!g_shutdown)
   {
     CTRenderer* pRenderer = g_mainHandle->GetRenderer();
-
-    //pRenderer->BindGameRenderTarget();
-    //g_mainHandle->GetRenderer()->DrawDepthBuffer();
-    //g_mainHandle->GetCameraManager()->DrawTrack();
-
     pRenderer->BindUIRenderTarget();
     g_mainHandle->GetUI()->Draw();
-
-    //pRenderer->UpdateMatrices();
   }
 
   return oIDXGISwapChain_Present(pSwapchain, SyncInterval, Flags);
+}
+
+void __fastcall hScaleformRenderer_Render(__int64 a1)
+{
+  if (g_mainHandle->GetCameraManager()->IsHudDisabled())
+    return;
+
+  oScaleformRenderer_Render(a1);
 }
 
 //////////////////////////
 ////   CAMERA HOOKS   ////
 //////////////////////////
 
-typedef void(__fastcall* tCameraUpdate)(Foundation::GameRender*);
 tCameraUpdate oCameraUpdate = nullptr;
 
 void __fastcall hCameraUpdate(Foundation::GameRender* a1)
@@ -59,6 +65,26 @@ void __fastcall hCameraUpdate(Foundation::GameRender* a1)
 ////   INPUT HOOKS    ////
 //////////////////////////
 
+tInputDeviceUpdate oGamepadUpdate = nullptr;
+tInputDeviceUpdate oKeyboardMouseUpdate = nullptr;
+
+__int64 __fastcall hGamepadUpdate(__int64 a1, __int64 a2, __int64 a3, __int64 a4)
+{
+  CameraManager* pCameraManager = g_mainHandle->GetCameraManager();
+  if (pCameraManager->IsCameraEnabled() && pCameraManager->IsGamepadDisabled())
+    return 0x14;
+
+  return oGamepadUpdate(a1, a2, a3, a4);
+}
+
+__int64 __fastcall hKeyboardMouseUpdate(__int64 a1, __int64 a2, __int64 a3, __int64 a4)
+{
+  CameraManager* pCameraManager = g_mainHandle->GetCameraManager();
+  if (pCameraManager->IsCameraEnabled() && pCameraManager->IsKbmDisabled())
+    return 0x36;
+
+  return oKeyboardMouseUpdate(a1, a2, a3, a4);
+}
 
 
 //////////////////////////
@@ -71,7 +97,7 @@ tSceneRenderLights oSceneRenderLights = nullptr;
 void __fastcall hSceneRenderLights(__int64 a1, __int64 a2)
 {
   oSceneRenderLights(a1, a2);
-  g_mainHandle->RenderTestLight();
+  //g_mainHandle->RenderTestLight();
 }
 
 
@@ -148,7 +174,11 @@ void util::hooks::Init()
     util::log::Error("Failed to initialize MinHook, MH_STATUS 0x%X", status);
 
   CreateHook("CameraUpdate", util::offsets::GetOffset("OFFSET_CAMERAUPDATE"), hCameraUpdate, &oCameraUpdate);
-  CreateHook("SceneLightRender", 0x1439D50B0, hSceneRenderLights, &oSceneRenderLights);
+
+  CreateHook("KeyboardMouseUpdate", util::offsets::GetOffset("OFFSET_KEYBOARDMOUSEUPDATE"), hKeyboardMouseUpdate, &oKeyboardMouseUpdate);
+  CreateHook("GamepadUpdate", util::offsets::GetOffset("OFFSET_GAMEPADUPDATE"), hGamepadUpdate, &oGamepadUpdate);
+  //CreateHook("SceneLightRender", 0x1439D50B0, hSceneRenderLights, &oSceneRenderLights);
+  CreateHook("ScaleformRender", util::offsets::GetOffset("OFFSET_SCALEFORMRENDER"), hScaleformRenderer_Render, &oScaleformRenderer_Render);
 
   CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
 }

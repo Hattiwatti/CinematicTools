@@ -54,6 +54,8 @@ public:
   void ReadConfig(INIReader* pReader);
   const std::string GetConfig() const;
 
+  bool IsHudDisabled() const { return m_HudDisabled; }
+
 private:
   void UpdateCamera(double dt);
   void UpdateInput(double dt);
@@ -77,6 +79,9 @@ private:
   boost::chrono::high_resolution_clock::time_point m_dtCameraUpdate;
   MouseBuffer m_MouseBuffer;
   bool m_SmoothMouse;
+
+  bool m_HudDisabled;
+  bool m_TimeFreezeEnabled;
 
 public:
   CameraManager(CameraManager const&) = delete;
