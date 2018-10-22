@@ -6,6 +6,7 @@ extern HMODULE g_aiModule;
 extern HMODULE g_d3dModule;
 extern HMODULE g_rendererModule;
 extern HMODULE g_rlModule;
+extern HMODULE g_qbModule;
 
 namespace Northlight
 {
@@ -138,7 +139,9 @@ namespace Northlight
     class Time
     {
     public:
-      BYTE Pad000[0x38];
+      BYTE Pad000[0x30];
+      float m_Framerate;
+      BYTE Pad034[0x4];
       float m_WorldTimeScale;
       float m_EffectTimeScale;
       float m_UnkTimeScale1;
@@ -219,5 +222,10 @@ namespace Northlight
       tSetDofParameter SetBokehScale = (tSetDofParameter)((__int64)g_rendererModule + 0x819C0);
       SetBokehScale(pDOFWrapper, bokeh);
     }
+  }
+
+  static float* GetFrameRate()
+  {
+    return (float*)((__int64)g_qbModule + 0xA95C88);
   }
 }

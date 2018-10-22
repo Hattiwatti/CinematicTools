@@ -94,3 +94,9 @@ BYTE util::CharToByte(char c)
   sscanf_s(&c, "%hhx", &b);
   return b;
 }
+
+void util::MakeWritable(void* address, DWORD size)
+{
+  DWORD dwProtect;
+  VirtualProtect(address, size, PAGE_READWRITE, &dwProtect);
+}

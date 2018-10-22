@@ -28,6 +28,7 @@ HMODULE g_aiModule = NULL;
 HMODULE g_d3dModule = NULL;
 HMODULE g_rendererModule = NULL;
 HMODULE g_rlModule = NULL;
+HMODULE g_qbModule = NULL;
 
 Main::Main()
 {
@@ -61,6 +62,7 @@ bool Main::Initialize()
 
   // Used for relative offsets
   g_gameHandle = GetModuleHandleA(g_moduleName);
+  g_qbModule = g_gameHandle;
   if (g_gameHandle == NULL)
   {
     util::log::Error("Failed to retrieve module handle, GetLastError 0x%X", GetLastError());
@@ -72,14 +74,6 @@ bool Main::Initialize()
   g_rendererModule = GetModuleHandleA("renderer_x64_f");
   g_rlModule = GetModuleHandleA("rl_x64_f");
 
-  // Subclass the window with a new WndProc to catch messages
-  g_origWndProc = (WNDPROC)SetWindowLongPtr(g_gameHwnd, -4, (LONG_PTR)&WndProc);
-  if (g_origWndProc == 0)
-  {
-    util::log::Error("Failed to set WndProc, GetLastError 0x%X", GetLastError());
-    return false;
-  }
-
   g_d3d11Device = Northlight::d3d::Device::GetDevice(); // Fetch ID3D11Device
   g_d3d11Context = Northlight::d3d::Device::GetContext(); // Fetch context
   g_dxgiSwapChain = Northlight::d3d::Device::Singleton()->m_pSwapchain; // Fetch SwapChain
@@ -90,6 +84,9 @@ bool Main::Initialize()
     util::log::Error("Device 0x%I64X DeviceContext 0x%I64X SwapChain 0x%I64X", g_d3d11Device, g_d3d11Context, g_dxgiSwapChain);
     return false;
   }
+
+  // Make framerate variable writable
+  util::MakeWritable(Northlight::GetFrameRate(), 4);
 
   // Retrieve game version and make a const variable for whatever version
   // the tools support. If versions mismatch, scan for offsets.
@@ -104,8 +101,16 @@ bool Main::Initialize()
     return false;
 
   util::hooks::Init();
-
   LoadConfig();
+
+  // Subclass the window with a new WndProc to catch messages
+  g_origWndProc = (WNDPROC)SetWindowLongPtr(g_gameHwnd, -4, (LONG_PTR)&WndProc);
+  if (g_origWndProc == 0)
+  {
+    util::log::Error("Failed to set WndProc, GetLastError 0x%X", GetLastError());
+    return false;
+  }
+
   return true;
 }
 
