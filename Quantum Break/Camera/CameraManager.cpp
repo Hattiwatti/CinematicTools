@@ -48,9 +48,9 @@ void CameraManager::HotkeyUpdate()
   if (pInput->IsActionDown(Action::ToggleFreezeTime))
   {
     m_TimeFreezeEnabled = !m_TimeFreezeEnabled;
-    float* pFramerate = Northlight::GetFrameRate();
+    util::log::Write("Timefreeze %s", m_TimeFreezeEnabled ? "Enabled" : "Disabled");
 
-    *pFramerate = m_TimeFreezeEnabled ? 0 : 30.f;
+    Northlight::SetGameFreezed(m_TimeFreezeEnabled);
 
     while (pInput->IsActionDown(Action::ToggleFreezeTime))
       Sleep(1);

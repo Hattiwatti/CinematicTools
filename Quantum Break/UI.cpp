@@ -205,7 +205,7 @@ void UI::Draw()
         ImGui::SetColumnOffset(-1, 290);
         ImGui::PushItemWidth(200);
 
-        bool* pRenderVelocityPass = (bool*)((__int64)g_rendererModule + 0x4848AB);
+        bool* pRenderVelocityPass = (bool*)((__int64)g_rendererModule + 0x4748AB);
         bool* pRenderSSSBlur = (bool*)((__int64)g_rendererModule + 0x47488B);
         bool* pRenderVectorBlur = (bool*)((__int64)g_rendererModule + 0x47488C);
         bool* pFilmGrain = (bool*)((__int64)g_rendererModule + 0x4748A4);

@@ -21,7 +21,7 @@ typedef __int64(__fastcall* tAspectRatioHook)(__int64);
 typedef void(__fastcall* tSetFov)(__int64, float);
 
 typedef __int64(__fastcall* tGetXinputState)(int, __int64);
-typedef __int64(__fastcall* tUpdateTime)(double);
+typedef void(__fastcall* tFreezeGame)(bool);
 
 
 //////////////////////////
@@ -122,21 +122,16 @@ BOOL WINAPI hSetCursorPos(int x, int y)
 ////   OTHER HOOKS    ////
 //////////////////////////
 
-tUpdateTime oUpdateTime = nullptr;
+tFreezeGame oFreezeGame = nullptr;
 
-__int64 __fastcall hUpdateTime(double a1)
+// Don't allow unfreeze if time freeze is enabled (going to menu and back to game)
+void __fastcall hFreezeGame(bool a1)
 {
-  if (g_mainHandle->GetCameraManager()->IsTimeFrozen())
-  {
-    BYTE* pTimeFreeze = (BYTE*)((__int64)g_gameHandle + 0x116F5B2);
-    *pTimeFreeze = 1;
-    Northlight::r::Time::Singleton()->m_EffectTimeScale = 0;
-    Northlight::r::Time::Singleton()->m_WorldTimeScale = 0;
-    Northlight::r::Time::Singleton()->m_UnkTimeScale1 = 0;
-    Northlight::r::Time::Singleton()->m_UnkTimeScale2 = 0;
-  }
+  CameraManager* pCameraManager = g_mainHandle->GetCameraManager();
+  if (pCameraManager->IsTimeFrozen())
+    return oFreezeGame(true);
 
-  return oUpdateTime(a1);
+  return oFreezeGame(a1);
 }
 
 /*----------------------------------------------------------------*/
@@ -212,15 +207,15 @@ void util::hooks::Init()
   __int64 CameraUpdate = (__int64)g_gameHandle + 0x3A1FC0;
   __int64 SetFov = (__int64)GetProcAddress(g_rlModule, "?setFov@PerspectiveView@m@@QEAAXM@Z");
   __int64 GetXinputState = (__int64)GetProcAddress(g_rlModule, "?rmdXInputGetState@@YAKKPEAU_rmd_XINPUT_STATE@@@Z");
-  __int64 TimeUpdate = (__int64)g_gameHandle + 0x3579B0;
   __int64 AspectRatioHook = (__int64)g_rlModule + 0xA4D20;
+  __int64 FreezeHook = (__int64)g_gameHandle + 0x357610;
 
   CreateVTableHook("SwapChainPresent", (PDWORD64*)g_dxgiSwapChain, hIDXGISwapChain_Present, 8, &oIDXGISwapChain_Present);
   CreateHook("CameraUpdate", CameraUpdate, hCameraUpdate, &oCameraUpdate);
   CreateHook("CameraFoV", SetFov, hSetFov, &oSetFov);
   CreateHook("GetXinputState", GetXinputState, hGetXinputState, &oGetXinputState);
   CreateHook("AspectRatioHook", AspectRatioHook, hAspectRatioHook, &oAspectRatioHook);
-  CreateHook("TimeUpdate", TimeUpdate, hUpdateTime, &oUpdateTime);
+  CreateHook("FreezeHook", FreezeHook, hFreezeGame, &oFreezeGame);
 
   HMODULE hUser32 = GetModuleHandleA("user32.dll");
   FARPROC pSetCursorPos = GetProcAddress(hUser32, "SetCursorPos");

@@ -80,7 +80,10 @@ void InputSystem::HandleRawInput(LPARAM lParam)
   {
     m_MouseState.x += raw->data.mouse.lLastX;
     m_MouseState.y += raw->data.mouse.lLastY;
+    m_MouseState.z += static_cast<short>(raw->data.mouse.usButtonData);
   }
+
+  delete[] lpb;
 }
 
 bool InputSystem::HandleKeyMsg(WPARAM wParam, LPARAM lParam)

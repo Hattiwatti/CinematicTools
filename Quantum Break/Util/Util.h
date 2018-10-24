@@ -65,7 +65,8 @@ namespace util
   std::string VkToString(DWORD vk);
   std::string KeyLparamToString(LPARAM lparam);
   BYTE CharToByte(char c);
-  void MakeWritable(void*, DWORD);
+  BOOL WriteMemory(DWORD_PTR, const void*, DWORD);
+
 
   namespace math
   {

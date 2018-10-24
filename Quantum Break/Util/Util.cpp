@@ -95,8 +95,13 @@ BYTE util::CharToByte(char c)
   return b;
 }
 
-void util::MakeWritable(void* address, DWORD size)
+BOOL util::WriteMemory(DWORD_PTR dwAddress, const void* cpvPatch, DWORD dwSize)
 {
   DWORD dwProtect;
-  VirtualProtect(address, size, PAGE_READWRITE, &dwProtect);
+  if (VirtualProtect((void*)dwAddress, dwSize, PAGE_READWRITE, &dwProtect))
+    memcpy((void*)dwAddress, cpvPatch, dwSize);
+  else
+    return false;
+
+  return VirtualProtect((void*)dwAddress, dwSize, dwProtect, new DWORD);
 }

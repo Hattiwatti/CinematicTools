@@ -85,9 +85,6 @@ bool Main::Initialize()
     return false;
   }
 
-  // Make framerate variable writable
-  util::MakeWritable(Northlight::GetFrameRate(), 4);
-
   // Retrieve game version and make a const variable for whatever version
   // the tools support. If versions mismatch, scan for offsets.
   // util::offsets::Scan();
@@ -113,8 +110,6 @@ bool Main::Initialize()
 
   return true;
 }
-
-Northlight::rend::Spotlight* pSpotlight = nullptr;
 
 void Main::Run()
 {

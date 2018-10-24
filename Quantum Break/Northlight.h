@@ -228,4 +228,19 @@ namespace Northlight
   {
     return (float*)((__int64)g_qbModule + 0xA95C88);
   }
+
+  static void SetGameFreezed(bool a1)
+  {
+    typedef void(__fastcall* tFreezeFunc)(bool);
+    tFreezeFunc FreezeFunc = (tFreezeFunc)((__int64)g_gameHandle + 0x357610);
+    FreezeFunc(a1);
+
+    // xor edx, edx -> inc edx
+    // So rend::VectorBlurWrapper::setFreeCameraMoved(bool) gets called with true
+    // Fixes vector blur on zooming etc.
+    if (a1)
+      util::WriteMemory((__int64)g_gameHandle + 0x636E7F, "\xFF\xC2", 2);
+    else
+      util::WriteMemory((__int64)g_gameHandle + 0x636E7F, "\x33\xD2", 2);
+  }
 }
