@@ -21,6 +21,8 @@ void Main::Initialize()
   util::log::Init();
   util::log::Write("Cinematic Tools for Tom Clancy's The Division");
 
+  Sleep(1000);
+
   g_pBase = reinterpret_cast<__int64>(GetModuleHandleA("TheDivision.exe"));
   if (g_pBase == 0)
     g_pBase = reinterpret_cast<__int64>(GetModuleHandleA("thedivision.exe"));
